@@ -88,6 +88,8 @@ float v_cameraFocusAngle = 35.0f;
 int v_cameraMode = CAM_MODE_FOCUS;
 qboolean v_resetCamera = 1;
 
+static float v_viewRoll = 0.0f;
+
 vec3_t v_client_aimangles;
 vec3_t g_ev_punchangle;
 
@@ -267,7 +269,6 @@ Moves the client pitch angle towards idealpitch sent by the server.
 If the user is adjusting pitch manually, either with lookup/lookdown,
 mlook and mouse, or klook and keyboard, pitch drifting is constantly stopped.
 ===============
-*/
 
 /*
 ==============================================================================
@@ -326,16 +327,10 @@ Roll is induced by movement and damage
 */
 void V_CalcViewRoll(struct ref_params_s* pparams)
 {
-	float side;
 	cl_entity_t* viewentity;
-
 	viewentity = gEngfuncs.GetEntityByIndex(pparams->viewentity);
 	if (!viewentity)
 		return;
-
-	side = V_CalcRoll(viewentity->angles, pparams->simvel, pparams->movevars->rollangle, pparams->movevars->rollspeed);
-
-	pparams->viewangles[ROLL] += side;
 
 	if (pparams->health <= 0 && (pparams->viewheight[2] != 0))
 	{
@@ -344,6 +339,39 @@ void V_CalcViewRoll(struct ref_params_s* pparams)
 		pparams->viewangles[ROLL] = 80;	// dead view angle
 		return;
 	}
+
+	// Modern, lightweight strafing roll: small angle, smoothed over time, always enabled.
+	vec3_t forward, right, up;
+	AngleVectors(pparams->viewangles, forward, right, up);
+
+	// Sideways speed relative to view direction
+	float sideSpeed = DotProduct(pparams->simvel, right);
+	float sideSign = sideSpeed < 0.0f ? -1.0f : 1.0f;
+	float sideAmount = fabs(sideSpeed);
+
+	const float kMaxSideSpeed = 300.0f;
+	const float kMaxRoll = 2.0f; // degrees
+	const float kSmoothing = 8.0f;
+
+	if (kMaxSideSpeed > 0.0f)
+	{
+		float factor = sideAmount / kMaxSideSpeed;
+		if (factor > 1.0f)
+			factor = 1.0f;
+
+		float targetRoll = sideSign * kMaxRoll * factor;
+		float lerp = pparams->frametime * kSmoothing;
+		if (lerp > 1.0f)
+			lerp = 1.0f;
+
+		v_viewRoll += (targetRoll - v_viewRoll) * lerp;
+	}
+	else
+	{
+		v_viewRoll = 0.0f;
+	}
+
+	pparams->viewangles[ROLL] += v_viewRoll;
 }
 
 /*
