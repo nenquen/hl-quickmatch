@@ -700,7 +700,17 @@ void ClientUserInfoChanged( edict_t *pEntity, char *infobuffer )
 		}
 	}
 
+	// Let game rules handle userinfo changes first (names, teams, etc.)
 	g_pGameRules->ClientUserInfoChanged( GetClassPtr( (CBasePlayer *)&pEntity->v ), infobuffer );
+
+	// After game rules logic, force the visual player model to a fixed one for everyone.
+	// This ignores any client-side model changes and any attempts to change the model
+	// from console or menus: the engine will always see "player_def" as the model key.
+	const char *pszModel = g_engfuncs.pfnInfoKeyValue( infobuffer, "model" );
+	if( !pszModel || stricmp( pszModel, "player_def" ) )
+	{
+		g_engfuncs.pfnSetClientKeyValue( ENTINDEX( pEntity ), infobuffer, "model", "player_def" );
+	}
 }
 
 static int g_serveractive = 0;
