@@ -306,7 +306,6 @@ void CHudAmmo::Reset( void )
 
 	//VidInit();
 	wrect_t nullrc = {0,};
-	SetCrosshair( 0, nullrc, 0, 0, 0 ); // reset crosshair
 	m_pWeapon = NULL; // reset last weapon
 }
 

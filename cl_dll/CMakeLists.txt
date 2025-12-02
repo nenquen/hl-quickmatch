@@ -100,6 +100,7 @@ set (CLDLL_SOURCES
 	hud_redraw.cpp
 	hud_spectator.cpp
 	hud_update.cpp
+	hud_crosshair.cpp
 	in_camera.cpp
 	input.cpp
 	input_goldsource.cpp
