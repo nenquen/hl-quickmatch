@@ -27,6 +27,13 @@
 #include "hltv.h"
 #include "view.h"
 
+extern "C"
+{
+	#include "kbutton.h"
+}
+
+extern kbutton_t in_sprint;
+
 // Spectator Mode
 extern "C"
 {
@@ -117,6 +124,9 @@ cvar_t	v_iroll_level = { "v_iroll_level", "0.1", 0, 0.1 };
 cvar_t	v_ipitch_level = { "v_ipitch_level", "0.3", 0, 0.3 };
 
 float	v_idlescale;  // used by TFC for concussion grenade effect
+
+// Smooth factor (0..1) used to blend sprint weapon pose in and out
+static float g_flSprintWeaponLerp = 0.0f;
 
 //=============================================================================
 /*
@@ -730,6 +740,30 @@ void V_CalcNormalRefdef(struct ref_params_s* pparams)
 	// Let the viewmodel shake at about 10% of the amplitude
 	gEngfuncs.V_ApplyShake(view->origin, view->angles, 0.9f);
 
+	// Smoothly blend in a lower, slightly angled-down weapon pose while sprinting
+	{
+		float target = (in_sprint.state & 1) ? 1.0f : 0.0f;
+		float speed = 6.0f; // how fast we ease in/out (lower = smoother)
+
+		float delta = target - g_flSprintWeaponLerp;
+		float step = speed * pparams->frametime;
+		if (step > fabs(delta))
+			step = fabs(delta);
+		if (delta > 0.0f)
+			g_flSprintWeaponLerp += step;
+		else if (delta < 0.0f)
+			g_flSprintWeaponLerp -= step;
+
+		// Apply position and angle offset based on current lerp value
+		if (g_flSprintWeaponLerp > 0.0f)
+		{
+			float downOffset = 1.0f * g_flSprintWeaponLerp;   // lower the gun a little
+			float pitchOffset = 14.0f * g_flSprintWeaponLerp; // tilt the front of the gun even more
+
+			view->origin[2] -= downOffset;
+			view->angles[PITCH] -= pitchOffset;
+		}
+	}
 
 	for (i = 0; i < 3; i++)
 	{

@@ -22,6 +22,11 @@ private:
 	cvar_t* m_colorG;
 	cvar_t* m_colorB;
 	cvar_t* m_additive;
+
+	// scope overlay sprite (drawn when zoomed/FOV < normal)
+	HSPRITE m_hScope;
+	int     m_iScopeWidth;
+	int     m_iScopeHeight;
 };
 
 extern CHudCrosshair g_HudCrosshair;

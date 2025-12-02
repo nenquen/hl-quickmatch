@@ -245,12 +245,12 @@ class CAwpAmmo : public CBasePlayerAmmo
 	void Spawn( void )
 	{
 		Precache();
-		SET_MODEL( ENT( pev ), "models/w_9mmclip.mdl" ); // temporary world model
+		SET_MODEL( ENT( pev ), "models/w_awpclip.mdl" );
 		CBasePlayerAmmo::Spawn();
 	}
 	void Precache( void )
 	{
-		PRECACHE_MODEL( "models/w_9mmclip.mdl" );
+		PRECACHE_MODEL( "models/w_awpclip.mdl" );
 		PRECACHE_SOUND( "items/9mmclip1.wav" );
 	}
 	BOOL AddAmmo( CBaseEntity *pOther )

@@ -114,6 +114,7 @@ kbutton_t	in_moveleft;
 kbutton_t	in_moveright;
 kbutton_t	in_strafe;
 kbutton_t	in_speed;
+kbutton_t	in_sprint;
 kbutton_t	in_use;
 kbutton_t	in_jump;
 kbutton_t	in_attack;
@@ -539,6 +540,16 @@ void IN_SpeedDown( void )
 void IN_SpeedUp( void )
 {
 	KeyUp( &in_speed );
+}
+
+void IN_SprintDown( void )
+{
+	KeyDown( &in_sprint );
+}
+
+void IN_SprintUp( void )
+{
+	KeyUp( &in_sprint );
 }
 
 void IN_StrafeDown( void )
@@ -1009,6 +1020,12 @@ int CL_ButtonBits( int bResetState )
 		bits |= IN_SCORE;
 	}
 
+	// Sprint is a separate button bit so server-side movement and weapons can react to it
+	if( in_sprint.state & 3 )
+	{
+		bits |= IN_RUN;
+	}
+
 	// Dead or in intermission? Shore scoreboard, too
 	if( CL_IsDead() || gHUD.m_iIntermission )
 	{
@@ -1031,6 +1048,7 @@ int CL_ButtonBits( int bResetState )
 		in_reload.state &= ~2;
 		in_alt1.state &= ~2;
 		in_score.state &= ~2;
+		in_sprint.state &= ~2;
 	}
 
 	return bits;
@@ -1093,6 +1111,8 @@ void InitInput( void )
 	gEngfuncs.pfnAddCommand( "-moveright", IN_MoverightUp );
 	gEngfuncs.pfnAddCommand( "+speed", IN_SpeedDown );
 	gEngfuncs.pfnAddCommand( "-speed", IN_SpeedUp );
+	gEngfuncs.pfnAddCommand( "+sprint", IN_SprintDown );
+	gEngfuncs.pfnAddCommand( "-sprint", IN_SprintUp );
 	gEngfuncs.pfnAddCommand( "+attack", IN_AttackDown );
 	gEngfuncs.pfnAddCommand( "-attack", IN_AttackUp );
 	gEngfuncs.pfnAddCommand( "+attack2", IN_Attack2Down );

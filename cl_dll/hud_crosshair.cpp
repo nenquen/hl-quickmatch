@@ -19,12 +19,28 @@ int CHudCrosshair::Init(void)
 	m_colorB  = CVAR_CREATE("crosshair_color_b", "0", FCVAR_ARCHIVE);
 	m_additive= CVAR_CREATE("crosshair_additive", "0", FCVAR_ARCHIVE);
 
+	// init scope sprite cache
+	m_hScope = 0;
+	m_iScopeWidth = m_iScopeHeight = 0;
+
 	m_iFlags = HUD_ACTIVE;
 	return 1;
 }
 
 int CHudCrosshair::VidInit(void)
 {
+	// Load scope overlay sprite (used when zoomed)
+	m_hScope = SPR_Load("sprites/awpscope.spr");
+	if (m_hScope)
+	{
+		m_iScopeWidth = SPR_Width(m_hScope, 0);
+		m_iScopeHeight = SPR_Height(m_hScope, 0);
+	}
+	else
+	{
+		m_iScopeWidth = m_iScopeHeight = 0;
+	}
+
 	return 1;
 }
 
@@ -43,6 +59,26 @@ int CHudCrosshair::Draw(float flTime)
 	// basic checks similar to original code: no crosshair in intermission
 	if (gHUD.m_iIntermission)
 		return 0;
+
+	// If we are zoomed (FOV < normal), draw scope overlay instead of the custom crosshair
+	if (gHUD.m_iFOV > 0 && gHUD.m_iFOV < 90)
+	{
+		if (m_hScope && m_iScopeWidth > 0 && m_iScopeHeight > 0)
+		{
+			const int x = (ScreenWidth  - m_iScopeWidth)  / 2;
+			const int y = (ScreenHeight - m_iScopeHeight) / 2;
+			wrect_t rc;
+			rc.left = 0;
+			rc.top = 0;
+			rc.right = m_iScopeWidth;
+			rc.bottom = m_iScopeHeight;
+
+			SPR_Set(m_hScope, 255, 255, 255);
+			SPR_DrawHoles(0, x, y, &rc);
+		}
+		// When zoomed, suppress the normal crosshair
+		return 1;
+	}
 
 	// position
 	const int centerX = ScreenWidth  / 2;

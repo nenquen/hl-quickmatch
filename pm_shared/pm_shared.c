@@ -1111,13 +1111,27 @@ void PM_WalkMove( void )
 	VectorCopy( wishvel, wishdir );   // Determine maginitude of speed of move
 	wishspeed = VectorNormalize( wishdir );
 
-	//
-	// Clamp to server defined max speed
-	//
-	if( wishspeed > pmove->maxspeed )
+	// Apply sprint multiplier when the player is holding the sprint key (IN_RUN)
+	if( pmove->cmd.buttons & IN_RUN )
 	{
-		VectorScale( wishvel, pmove->maxspeed / wishspeed, wishvel );
-		wishspeed = pmove->maxspeed;
+		wishspeed *= 1.4f;
+	}
+
+	//
+	// Clamp to server defined max speed (allowing sprint to temporarily raise the cap)
+	//
+	{
+		float flMaxSpeed = pmove->maxspeed;
+		if( pmove->cmd.buttons & IN_RUN )
+		{
+			flMaxSpeed *= 1.4f;
+		}
+
+		if( wishspeed > flMaxSpeed )
+		{
+			VectorScale( wishvel, flMaxSpeed / wishspeed, wishvel );
+			wishspeed = flMaxSpeed;
+		}
 	}
 
 	// Set pmove velocity
