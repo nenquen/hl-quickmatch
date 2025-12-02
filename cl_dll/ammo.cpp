@@ -543,12 +543,6 @@ int CHudAmmo::MsgFunc_HideWeapon( const char *pszName, int iSize, void *pbuf )
 	{
 		wrect_t nullrc = {0,};
 		gpActiveSel = NULL;
-		SetCrosshair( 0, nullrc, 0, 0, 0 );
-	}
-	else
-	{
-		if( m_pWeapon )
-			SetCrosshair( m_pWeapon->hCrosshair, m_pWeapon->rcCrosshair, 255, 255, 255 );
 	}
 
 	return 1;
@@ -578,7 +572,6 @@ int CHudAmmo::MsgFunc_CurWeapon( const char *pszName, int iSize, void *pbuf )
 
 	if( iId < 1 )
 	{
-		SetCrosshair( 0, nullrc, 0, 0, 0 );
 		// Clear out the weapon so we don't keep drawing the last active weapon's ammo. - Solokiller
 		m_pWeapon = 0;
 		return 0;
@@ -616,18 +609,10 @@ int CHudAmmo::MsgFunc_CurWeapon( const char *pszName, int iSize, void *pbuf )
 		if( gHUD.m_iFOV >= 90 )
 		{
 			// normal crosshairs
-			if( fOnTarget && m_pWeapon->hAutoaim )
-				SetCrosshair( m_pWeapon->hAutoaim, m_pWeapon->rcAutoaim, 255, 255, 255 );
-			else
-				SetCrosshair( m_pWeapon->hCrosshair, m_pWeapon->rcCrosshair, 255, 255, 255 );
 		}
 		else
 		{
 			// zoomed crosshairs
-			if( fOnTarget && m_pWeapon->hZoomedAutoaim )
-				SetCrosshair( m_pWeapon->hZoomedAutoaim, m_pWeapon->rcZoomedAutoaim, 255, 255, 255 );
-			else
-				SetCrosshair( m_pWeapon->hZoomedCrosshair, m_pWeapon->rcZoomedCrosshair, 255, 255, 255 );
 		}
 	}
 

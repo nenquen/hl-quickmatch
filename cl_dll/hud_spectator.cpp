@@ -1201,13 +1201,10 @@ void CHudSpectator::SetModes( int iNewMainMode, int iNewInsetMode )
 			m_crosshairRect.top = 0;
 			m_crosshairRect.right = 48;
 			m_crosshairRect.bottom = 24;
-
-			SetCrosshair( m_hCrosshair, m_crosshairRect, 255, 255, 255 );
 		}
 		else
 		{
 			memset( &m_crosshairRect, 0, sizeof(m_crosshairRect) );
-			SetCrosshair( 0, m_crosshairRect, 0, 0, 0 );
 		}
 
 #if USE_VGUI
@@ -1854,13 +1851,10 @@ void CHudSpectator::CheckSettings()
 		m_crosshairRect.top = 0;
 		m_crosshairRect.right = 48;
 		m_crosshairRect.bottom = 24;
-					
-		SetCrosshair( m_hCrosshair, m_crosshairRect, 255, 255, 255 );
 	}
 	else
 	{
 		memset( &m_crosshairRect, 0, sizeof(m_crosshairRect) );
-		SetCrosshair( 0, m_crosshairRect, 0, 0, 0 );
 	}
 
 	// if we are a real player on server don't allow inset window

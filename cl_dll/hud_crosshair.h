@@ -21,7 +21,6 @@ private:
 	cvar_t* m_colorR;
 	cvar_t* m_colorG;
 	cvar_t* m_colorB;
-	cvar_t* m_alpha;
 	cvar_t* m_additive;
 };
 
