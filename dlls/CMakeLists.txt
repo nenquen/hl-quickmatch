@@ -117,6 +117,7 @@ set (SVDLL_SOURCES
 	rat.cpp
 	roach.cpp
 	rpg.cpp
+	awp.cpp
 	satchel.cpp
 	schedule.cpp
 	scientist.cpp

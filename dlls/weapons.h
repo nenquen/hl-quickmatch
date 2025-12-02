@@ -72,6 +72,7 @@ public:
 #define WEAPON_SHOTGUN			7
 #define WEAPON_RPG				8
 #define WEAPON_HORNETGUN		9
+#define WEAPON_AWP			10
 #define WEAPON_HANDGRENADE		12
 #define WEAPON_TRIPMINE			13
 #define	WEAPON_SATCHEL			14
@@ -92,6 +93,7 @@ public:
 #define CROSSBOW_WEIGHT		10
 #define RPG_WEIGHT			20
 #define HORNETGUN_WEIGHT	15
+#define AWP_WEIGHT			20
 #define HANDGRENADE_WEIGHT	5
 #define SNARK_WEIGHT		5
 #define SATCHEL_WEIGHT		-10
@@ -121,6 +123,7 @@ public:
 #define SHOTGUN_MAX_CLIP		8
 #define CROSSBOW_MAX_CLIP		5
 #define RPG_MAX_CLIP			1
+#define AWP_MAX_CLIP			10
 #define HORNETGUN_MAX_CLIP		WEAPON_NOCLIP
 #define HANDGRENADE_MAX_CLIP	WEAPON_NOCLIP
 #define SATCHEL_MAX_CLIP		WEAPON_NOCLIP
@@ -136,6 +139,7 @@ public:
 #define SHOTGUN_DEFAULT_GIVE		12
 #define CROSSBOW_DEFAULT_GIVE		5
 #define RPG_DEFAULT_GIVE			1
+#define AWP_DEFAULT_GIVE		10
 #define HANDGRENADE_DEFAULT_GIVE	5
 #define SATCHEL_DEFAULT_GIVE		1
 #define TRIPMINE_DEFAULT_GIVE		1
@@ -151,6 +155,7 @@ public:
 #define AMMO_BUCKSHOTBOX_GIVE	12
 #define AMMO_CROSSBOWCLIP_GIVE	CROSSBOW_MAX_CLIP
 #define AMMO_RPGCLIP_GIVE		RPG_MAX_CLIP
+#define AMMO_AWP_GIVE			AWP_MAX_CLIP
 #define AMMO_SNARKBOX_GIVE		5
 
 // bullet types
@@ -989,5 +994,32 @@ public:
 
 private:
 	unsigned short m_usSnarkFire;
+};
+
+class CAwp : public CBasePlayerWeapon
+{
+public:
+	void Spawn( void );
+	void Precache( void );
+	int iItemSlot( void ) { return 3; }
+	int GetItemInfo( ItemInfo *p );
+	int AddToPlayer( CBasePlayer *pPlayer );
+
+	void PrimaryAttack( void );
+	void SecondaryAttack( void );
+	BOOL Deploy( void );
+	void Reload( void );
+	void WeaponIdle( void );
+
+	int m_fInZoom; // don't save this
+
+	virtual BOOL UseDecrement( void )
+	{
+	#if CLIENT_WEAPONS
+		return TRUE;
+	#else
+		return FALSE;
+	#endif
+	}
 };
 #endif // WEAPONS_H

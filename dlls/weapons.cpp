@@ -294,6 +294,7 @@ void W_Precache( void )
 	// custom items...
 
 	// common world objects
+	PRECACHE_SOUND("weapons/deploy.wav");  // Deploy sound for all weapons
 	UTIL_PrecacheOther( "item_suit" );
 	UTIL_PrecacheOther( "item_healthkit" );
 	UTIL_PrecacheOther( "item_battery" );
@@ -336,6 +337,10 @@ void W_Precache( void )
 	// crossbow
 	UTIL_PrecacheOtherWeapon( "weapon_crossbow" );
 	UTIL_PrecacheOther( "ammo_crossbow" );
+
+	// awp sniper rifle
+	UTIL_PrecacheOtherWeapon( "weapon_awp" );
+	UTIL_PrecacheOther( "ammo_awp" );
 
 	// egon
 	UTIL_PrecacheOtherWeapon( "weapon_egon" );
@@ -984,6 +989,9 @@ BOOL CBasePlayerWeapon::DefaultDeploy( const char *szViewModel, const char *szWe
 	m_pPlayer->pev->weaponmodel = MAKE_STRING( szWeaponModel );
 	strcpy( m_pPlayer->m_szAnimExtention, szAnimExt );
 	SendWeaponAnim( iAnim, skiplocal, body );
+
+	// Play deploy sound for all weapons
+	EMIT_SOUND(ENT(m_pPlayer->pev), CHAN_ITEM, "weapons/deploy.wav", 0.8, ATTN_NORM);
 
 	m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 0.5f;
 	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 1.0f;

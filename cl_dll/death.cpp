@@ -175,7 +175,8 @@ int CHudDeathNotice::Draw( float flTime )
 
 			// Compute final target X (with some right margin)
 			int rightMargin = XRES( 16 );
-			int spriteWidth = gHUD.GetSpriteRect( id ).right - gHUD.GetSpriteRect( id ).left;
+			const wrect_t& iconRect = gHUD.GetSpriteRect( id );
+			int spriteWidth = iconRect.right - iconRect.left;
 			int killerWidth = 0;
 			if( !rgDeathNoticeList[i].iSuicide )
 			{
@@ -218,6 +219,7 @@ int CHudDeathNotice::Draw( float flTime )
 
 			// Now draw text and sprite starting from animatedX
 			x = animatedX;
+			int textY = y + ( gap - screenInfo.iCharHeight ) / 2;
 
 			if( !rgDeathNoticeList[i].iSuicide )
 			{
@@ -226,21 +228,22 @@ int CHudDeathNotice::Draw( float flTime )
 				int textColor = (int)( 255.0f * textFade );
 				if( textColor < 0 ) textColor = 0;
 				if( textColor > 255 ) textColor = 255;
-				x = DrawUtfString( x + 5, y + 1, ScreenWidth, rgDeathNoticeList[i].szKiller, textColor, textColor, textColor );
+				x = DrawUtfString( x + 5, textY, ScreenWidth, rgDeathNoticeList[i].szKiller, textColor, textColor, textColor );
 			}
 
 			// Weapon icon: modulate brightness by fade so it also disappears
 			int iconColor = (int)( 255.0f * fade );
 			if( iconColor < 0 ) iconColor = 0;
 			if( iconColor > 255 ) iconColor = 255;
-			r = iconColor; g = iconColor; b = iconColor;
+			r = iconColor; g = iwconColor; b = iconColor;
 
-			// Draw death weapon
+			// Draw death weapon, vertically centered in the line
 			SPR_Set( gHUD.GetSprite(id), r, g, b );
 			// pfnSPR_DrawAdditive doesn't take alpha directly, so rely on global fade in renderer
-			SPR_DrawAdditive( 0, x, y, &gHUD.GetSpriteRect(id) );
+			int iconY = y + ( gap - ( iconRect.bottom - iconRect.top ) ) / 2;
+			SPR_DrawAdditive( 0, x, iconY, &iconRect );
 
-			x += ( gHUD.GetSpriteRect(id).right - gHUD.GetSpriteRect(id).left );
+			x += ( iconRect.right - iconRect.left );
 
 			// Draw victim's name (if it was a player that was killed)
 			if( rgDeathNoticeList[i].iNonPlayerKill == FALSE )
@@ -249,7 +252,7 @@ int CHudDeathNotice::Draw( float flTime )
 				int textColor = (int)( 255.0f * textFade );
 				if( textColor < 0 ) textColor = 0;
 				if( textColor > 255 ) textColor = 255;
-				x = DrawUtfString( x, y + 1, ScreenWidth, rgDeathNoticeList[i].szVictim, textColor, textColor, textColor );
+				x = DrawUtfString( x, textY, ScreenWidth, rgDeathNoticeList[i].szVictim, textColor, textColor, textColor );
 			}
 		}
 	}

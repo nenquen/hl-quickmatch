@@ -35,6 +35,11 @@ WEAPON *gpActiveSel;	// NULL means off, 1 means just the menu bar, otherwise
 						// this points to the active weapon menu item
 WEAPON *gpLastSel;		// Last weapon menu selection 
 
+int g_iLastRequestedSlot = 0; // last slot requested via number keys / slot commands
+
+bool g_bWeaponMenuClosing = false;
+float g_flWeaponMenuCloseStart = 0.0f;
+
 client_sprite_t *GetSpriteList(client_sprite_t *pList, const char *psz, int iRes, int iCount);
 
 WeaponsResource gWR;
@@ -381,10 +386,16 @@ void CHudAmmo::Think( void )
 		}
 
 		gpLastSel = gpActiveSel;
-		gpActiveSel = NULL;
 		gHUD.m_iKeyBits &= ~IN_ATTACK;
 
 		PlaySound( "common/wpn_select.wav", 1 );
+
+		// Start fade-out animation for the weapon menu instead of hiding instantly
+		if( !g_bWeaponMenuClosing )
+		{
+			g_bWeaponMenuClosing = true;
+			g_flWeaponMenuCloseStart = gHUD.m_flTime;
+		}
 	}
 
 }
@@ -414,6 +425,10 @@ HSPRITE* WeaponsResource::GetAmmoPicFromWeapon( int iAmmoId, wrect_t& rect )
 // Menu Selection Code
 void WeaponsResource::SelectSlot( int iSlot, int fAdvance, int iDirection )
 {
+	g_iLastRequestedSlot = iSlot;
+	g_bWeaponMenuClosing = false;
+	g_flWeaponMenuCloseStart = 0.0f;
+
 	if( gHUD.m_Menu.m_fMenuDisplayed && ( fAdvance  == FALSE ) && ( iDirection == 1 ) )	
 	{
 		// menu is overriding slot use commands
@@ -1007,151 +1022,185 @@ void DrawAmmoBar( WEAPON *p, int x, int y, int width, int height )
 //
 int CHudAmmo::DrawWList( float flTime )
 {
-	int r, g, b, x, y, a, i;
+	int r, g, b;
+	int x, y;
 
 	if( !gpActiveSel )
 		return 0;
 
-	int iActiveSlot;
+	// Aktif slotu belirle
+	int activeSlot = -1;
+	if( gpActiveSel == (WEAPON*)1 )
+		activeSlot = g_iLastRequestedSlot;
+	else
+		activeSlot = gpActiveSel->iSlot;
 
-	if( gpActiveSel == (WEAPON *) 1 )
-		iActiveSlot = -1;	// current slot has no weapons
-	else 
-		iActiveSlot = gpActiveSel->iSlot;
+	if( activeSlot < 0 || activeSlot >= MAX_WEAPON_SLOTS )
+		activeSlot = 0;
 
-	x = 10; //!!!
-	y = 10; //!!!
+	const int marginX = XRES( 12 );
+	const int marginY = YRES( 24 );
+	const int lineSpacing = YRES( 4 );
+	const int lineHeight = gHUD.m_iFontHeight + lineSpacing;
 
-	// Ensure that there are available choices in the active slot
-	if( iActiveSlot > 0 )
+	// Slot değişiminde smooth animasyon için hem yeni hem eski slotu takip et
+	static int s_iAnimSlot = -1;
+	static int s_iPrevSlot = -1;
+	static float s_flAnimStartTime = 0.0f;
+
+	if( s_iAnimSlot != activeSlot )
 	{
-		if( !gWR.GetFirstPos( iActiveSlot ) )
+		s_iPrevSlot = s_iAnimSlot;
+		s_iAnimSlot = activeSlot;
+		s_flAnimStartTime = flTime;
+	}
+
+	float slideDuration = 0.20f; // seconds
+	float slideT = 1.0f;
+	if( s_flAnimStartTime > 0.0f )
+	{
+		float life = flTime - s_flAnimStartTime;
+		if( life < slideDuration )
 		{
-			gpActiveSel = (WEAPON *) 1;
-			iActiveSlot = -1;
+			slideT = life / slideDuration;
+			if( slideT < 0.0f ) slideT = 0.0f;
+		}
+	}
+	slideT = Q_min( slideT, 1.0f );
+	// smoothstep easing
+	slideT = slideT * slideT * ( 3.0f - 2.0f * slideT );
+
+	// Menü kapanırken global fade-out
+	float fadeFactor = 1.0f;
+	float closeDuration = 0.25f; // seconds
+	if( g_bWeaponMenuClosing )
+	{
+		float closeT = ( flTime - g_flWeaponMenuCloseStart ) / closeDuration;
+		if( closeT >= 1.0f )
+		{
+			// Fade-out bitti, menüyü tamamen kapat
+			g_bWeaponMenuClosing = false;
+			gpActiveSel = NULL;
+			return 0;
+		}
+		if( closeT < 0.0f ) closeT = 0.0f;
+		if( closeT > 1.0f ) closeT = 1.0f;
+		fadeFactor = 1.0f - closeT;
+	}
+
+	// Soldaki slot listesi
+	for( int slot = 0; slot < MAX_WEAPON_SLOTS; ++slot )
+	{
+		x = marginX;
+		y = marginY + slot * lineHeight;
+
+		// Slot metni "[n] SLOT"
+		char buf[64];
+		_snprintf( buf, sizeof( buf ), "[%d] SLOT", slot + 1 );
+		int titleWidth = ConsoleStringLen( buf );
+		int boxX = x - XRES( 6 );
+		int boxW = titleWidth + XRES( 12 );
+		int boxH = lineHeight;
+
+		bool isSelectedSlot = ( slot == activeSlot );
+		int bgR, bgG, bgB, bgA;
+
+		if( isSelectedSlot )
+		{
+			// Seçili slot: şeffaf siyah
+			bgR = bgG = bgB = 0;
+			bgA = (int)( 160.0f * fadeFactor );
+		}
+		else
+		{
+			// Diğer slotlar: açık gri şeffaf
+			bgR = bgG = bgB = 200;
+			bgA = (int)( 90.0f * fadeFactor );
+		}
+
+		if( bgA > 0 )
+		{
+			gEngfuncs.pfnFillRGBABlend( boxX, y - YRES( 2 ), boxW, boxH, bgR, bgG, bgB, bgA );
+		}
+
+		int headerR = 255, headerG = 255, headerB = 255;
+		if( !isSelectedSlot )
+		{
+			// Seçili olmayanlar hafif soluk olsun
+			ScaleColors( headerR, headerG, headerB, (int)( 220.0f * fadeFactor ) );
+		}
+		else
+		{
+			ScaleColors( headerR, headerG, headerB, (int)( 255.0f * fadeFactor ) );
+		}
+
+		DrawUtfString( x, y, ScreenWidth, buf, headerR, headerG, headerB );
+	}
+
+	// Aktif slotun silahlarını, o slot satırının sağında tek satır string olarak göster
+	// Önce, aktif slotta silah var mı kontrol et
+	bool hasAnyWeaponInActiveSlot = false;
+	for( int posCheck = 0; posCheck < MAX_WEAPON_POSITIONS; ++posCheck )
+	{
+		WEAPON* pCheck = gWR.GetWeaponSlot( activeSlot, posCheck );
+		if( pCheck && pCheck->iId )
+		{
+			hasAnyWeaponInActiveSlot = true;
+			break;
 		}
 	}
 
-	// Draw top line
-	for( i = 0; i < MAX_WEAPON_SLOTS; i++ )
+	if( !hasAnyWeaponInActiveSlot )
+		return 1; // sadece slot isimleri gösterilsin
+
+	// Slot değişimindeki slideT ile silah isimleri fade-in olsun
+	float weaponAppear = slideT;
+
+	// Aktif slot satırının Y konumu ve silah isimleri için X'i, slot başlığının hemen sağına hizala
+	int activeSlotY = marginY + activeSlot * lineHeight;
+	char activeBuf[64];
+	_snprintf( activeBuf, sizeof( activeBuf ), "[%d] SLOT", activeSlot + 1 );
+	int activeTitleWidth = ConsoleStringLen( activeBuf );
+	int weaponsBaseX = marginX + activeTitleWidth + XRES( 14 );
+
+	// Aktif slotun silahlarını, bu X kolonunda dikey liste olarak çiz
+	int weaponY = activeSlotY;
+	for( int pos = 0; pos < MAX_WEAPON_POSITIONS; ++pos )
 	{
-		int iWidth;
+		WEAPON* p = gWR.GetWeaponSlot( activeSlot, pos );
+		if( !p || !p->iId )
+			continue;
 
-		UnpackRGB( r, g, b, RGB_YELLOWISH );
-
-		if( iActiveSlot == i )
-			a = 255;
+		// Kısa isim üret
+		char displayName[64];
+		const char* srcName = p->szName;
+		const char* prefix = "weapon_";
+		if( !strncmp( srcName, prefix, strlen( prefix ) ) )
+			strlcpy( displayName, srcName + strlen( prefix ), sizeof( displayName ) );
 		else
-			a = 192;
+			strlcpy( displayName, srcName, sizeof( displayName ) );
 
-		ScaleColors( r, g, b, 255 );
-		SPR_Set( gHUD.GetSprite( m_HUD_bucket0 + i ), r, g, b );
+		x = weaponsBaseX;
+		y = weaponY;
 
-		// make active slot wide enough to accomodate gun pictures
-		if( i == iActiveSlot )
+		// Sadece aktif seçilmiş silah için siyah arka plan, diğerlerinde arka plan yok
+		if( gpActiveSel && gpActiveSel == p )
 		{
-			WEAPON *p = gWR.GetFirstPos( iActiveSlot );
-			if( p )
-				iWidth = p->rcActive.right - p->rcActive.left;
-			else
-				iWidth = giBucketWidth;
-		}
-		else
-			iWidth = giBucketWidth;
-
-		SPR_DrawAdditive( 0, x, y, &gHUD.GetSpriteRect( m_HUD_bucket0 + i ) );
-		
-		x += iWidth + 5;
-	}
-
-	a = 128; //!!!
-	x = 10;
-
-	// Draw all of the buckets
-	for( i = 0; i < MAX_WEAPON_SLOTS; i++ )
-	{
-		y = giBucketHeight + 10;
-
-		// If this is the active slot, draw the bigger pictures,
-		// otherwise just draw boxes
-		if( i == iActiveSlot )
-		{
-			WEAPON *p = gWR.GetFirstPos( i );
-			int iWidth = giBucketWidth;
-			if( p )
-				iWidth = p->rcActive.right - p->rcActive.left;
-
-			for( int iPos = 0; iPos < MAX_WEAPON_POSITIONS; iPos++ )
+			int textWidth = ConsoleStringLen( displayName );
+			int br = 0, bg = 0, bb = 0;
+			int bgAlpha = (int)( 180.0f * fadeFactor * weaponAppear );
+			if( bgAlpha > 0 )
 			{
-				p = gWR.GetWeaponSlot( i, iPos );
-
-				if( !p || !p->iId )
-					continue;
-
-				UnpackRGB( r, g, b, RGB_YELLOWISH );
-
-				// if active, then we must have ammo.
-				if( gpActiveSel == p )
-				{
-					SPR_Set( p->hActive, r, g, b );
-					SPR_DrawAdditive( 0, x, y, &p->rcActive );
-
-					SPR_Set( gHUD.GetSprite( m_HUD_selection ), r, g, b );
-					SPR_DrawAdditive( 0, x, y, &gHUD.GetSpriteRect( m_HUD_selection ) );
-				}
-				else
-				{
-					// Draw Weapon if Red if no ammo
-					if( gWR.HasAmmo( p ) )
-						ScaleColors( r, g, b, 192 );
-					else
-					{
-						UnpackRGB( r, g, b, RGB_REDISH );
-						ScaleColors( r, g, b, 128 );
-					}
-
-					SPR_Set( p->hInactive, r, g, b );
-					SPR_DrawAdditive( 0, x, y, &p->rcInactive );
-				}
-
-				// Draw Ammo Bar
-				DrawAmmoBar( p, x + giABWidth / 2, y, giABWidth, giABHeight );
-				
-				y += p->rcActive.bottom - p->rcActive.top + 5;
+				gEngfuncs.pfnFillRGBABlend( x - XRES( 6 ), y - YRES( 2 ), textWidth + XRES( 12 ), lineHeight, br, bg, bb, bgAlpha );
 			}
-
-			x += iWidth + 5;
 		}
-		else
-		{
-			// Draw Row of weapons.
-			UnpackRGB( r, g, b, RGB_YELLOWISH );
 
-			for( int iPos = 0; iPos < MAX_WEAPON_POSITIONS; iPos++ )
-			{
-				WEAPON *p = gWR.GetWeaponSlot( i, iPos );
+		// Yazı rengi
+		r = g = b = 255;
+		ScaleColors( r, g, b, (int)( 255.0f * fadeFactor * weaponAppear ) );
+		DrawUtfString( x, y, ScreenWidth, displayName, r, g, b );
 
-				if( !p || !p->iId )
-					continue;
-
-				if( gWR.HasAmmo( p ) )
-				{
-					UnpackRGB( r, g, b, RGB_YELLOWISH );
-					a = 128;
-				}
-				else
-				{
-					UnpackRGB( r, g, b, RGB_REDISH );
-					a = 96;
-				}
-
-				FillRGBA( x, y, giBucketWidth, giBucketHeight, r, g, b, a );
-
-				y += giBucketHeight + 5;
-			}
-
-			x += giBucketWidth + 5;
-		}
+		weaponY += lineHeight;
 	}
 
 	return 1;

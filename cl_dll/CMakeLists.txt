@@ -73,6 +73,7 @@ set (CLDLL_SOURCES
 	../dlls/satchel.cpp
 	../dlls/shotgun.cpp
 	../dlls/squeakgrenade.cpp
+	../dlls/awp.cpp
 	../dlls/tripmine.cpp
 	../dlls/glock.cpp
 	ev_hldm.cpp
