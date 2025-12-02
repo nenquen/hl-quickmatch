@@ -9,8 +9,8 @@
 #if !defined ( EV_HLDMH )
 #define EV_HLDMH
 
-// bullet types
-typedef	enum
+// bullet types (client copy, keep in sync with dlls/weapons.h as needed)
+typedef enum
 {
 	BULLET_NONE = 0,
 	BULLET_PLAYER_9MM, // glock
@@ -22,7 +22,7 @@ typedef	enum
 	BULLET_MONSTER_9MM,
 	BULLET_MONSTER_MP5,
 	BULLET_MONSTER_12MM
-}Bullet;
+} Bullet;
 
 enum glock_e
 {

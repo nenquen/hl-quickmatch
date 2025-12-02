@@ -37,6 +37,8 @@ struct DeathNoticeItem {
 	int iTeamKill;
 	int iNonPlayerKill;
 	float flDisplayTime;
+	float flStartTime; // time when this notice was created (for slide animation)
+	float flCurrentY;  // current vertical position for smooth stacking animation
 	float *KillerColor;
 	float *VictimColor;
 };
@@ -98,14 +100,18 @@ int CHudDeathNotice::Draw( float flTime )
 
 	int gap = 20;
 
-	const wrect_t& sprite = gHUD.GetSpriteRect(m_HUD_d_skull);
-	gap = sprite.bottom - sprite.top;
+	const wrect_t& sprite = gHUD.GetSpriteRect( m_HUD_d_skull );
+	gap = sprite.bottom - sprite.top; // line height
 
 	SCREENINFO screenInfo;
 
-	screenInfo.iSize = sizeof(SCREENINFO);
-	gEngfuncs.pfnGetScreenInfo(&screenInfo);
+	screenInfo.iSize = sizeof( SCREENINFO );
+	gEngfuncs.pfnGetScreenInfo( &screenInfo );
 	gap = Q_max( gap, screenInfo.iCharHeight );
+
+	// base Y and extra spacing between stacked messages
+	float baseY = (float)YRES( DEATHNOTICE_TOP ) + 2.0f;
+	int extraSpacing = YRES( 4 );
 
 	for( int i = 0; i < MAX_DEATHNOTICES; i++ )
 	{
@@ -129,40 +135,121 @@ int CHudDeathNotice::Draw( float flTime )
 		if( gViewPort && gViewPort->AllowedToPrintText() )
 #endif
 		{
-			// Draw the death notice
-			y = YRES( DEATHNOTICE_TOP ) + 2 + ( gap * i );  //!!!
+			// Target vertical position for this notice (with extra spacing)
+			float targetY = baseY + (float)( ( gap + extraSpacing ) * i );
 
-			int id = ( rgDeathNoticeList[i].iId == -1 ) ? m_HUD_d_skull : rgDeathNoticeList[i].iId;
-			x = ScreenWidth - ConsoleStringLen( rgDeathNoticeList[i].szVictim ) - ( gHUD.GetSpriteRect(id).right - gHUD.GetSpriteRect(id).left ) - 4;
+			// Initialize or smoothly move current Y towards target for stacking animation
+			if( rgDeathNoticeList[i].flCurrentY == 0.0f )
+			{
+				rgDeathNoticeList[i].flCurrentY = targetY;
+			}
+			else
+			{
+				// simple critically damped-ish interpolation
+				float lerp = 0.2f;
+				rgDeathNoticeList[i].flCurrentY += ( targetY - rgDeathNoticeList[i].flCurrentY ) * lerp;
+			}
+
+			// Draw the death notice
+			y = (int)rgDeathNoticeList[i].flCurrentY;
+
+			// Always use a single generic kill icon instead of per-weapon sprites
+			int id = m_HUD_d_skull;
+
+			// Fade-out factor based on remaining lifetime (last 1 second fades)
+			float fade = 1.0f;
+			float fadeDuration = 1.0f;
+			float timeLeft = rgDeathNoticeList[i].flDisplayTime - flTime;
+			if( timeLeft < fadeDuration )
+			{
+				fade = timeLeft / fadeDuration;
+				if( fade < 0.0f )
+					fade = 0.0f;
+			}
+			// make fade steeper and skip drawing when almost gone
+			fade = fade * fade; // quadratic falloff so it darkens faster
+			if( fade <= 0.02f )
+			{
+				continue;
+			}
+
+			// Compute final target X (with some right margin)
+			int rightMargin = XRES( 16 );
+			int spriteWidth = gHUD.GetSpriteRect( id ).right - gHUD.GetSpriteRect( id ).left;
+			int killerWidth = 0;
+			if( !rgDeathNoticeList[i].iSuicide )
+			{
+				killerWidth = 5 + ConsoleStringLen( rgDeathNoticeList[i].szKiller );
+			}
+			int victimWidth = ( rgDeathNoticeList[i].iNonPlayerKill == FALSE ) ? ConsoleStringLen( rgDeathNoticeList[i].szVictim ) : 0;
+			int lineWidth = killerWidth + spriteWidth + victimWidth;
+			int targetX = ScreenWidth - rightMargin - lineWidth;
+
+			// Slide-in animation from the right (smooth)
+			float animDuration = 0.5f; // seconds
+			float t = 1.0f;
+			if( rgDeathNoticeList[i].flStartTime > 0.0f )
+			{
+				float life = flTime - rgDeathNoticeList[i].flStartTime;
+				if( life < animDuration )
+				{
+					t = life / animDuration;
+					if( t < 0.0f ) t = 0.0f;
+				}
+			}
+			t = Q_min( t, 1.0f );
+			// smoothstep easing for nicer motion
+			t = t * t * ( 3.0f - 2.0f * t );
+
+			int startOffset = XRES( 120 );
+			int animatedX = targetX + (int)((1.0f - t) * startOffset);
+
+			// Simple rectangular background box behind the whole line
+			int boxX = animatedX - 6;
+			int boxW = lineWidth + 12;
+			if( boxW > 0 )
+			{
+				int bgAlpha = (int)( 100.0f * fade );
+				if( bgAlpha > 0 )
+				{
+					gEngfuncs.pfnFillRGBABlend( boxX, y - 2, boxW, gap + 4, 0, 0, 0, bgAlpha );
+				}
+			}
+
+			// Now draw text and sprite starting from animatedX
+			x = animatedX;
 
 			if( !rgDeathNoticeList[i].iSuicide )
 			{
-				x -= ( 5 + ConsoleStringLen( rgDeathNoticeList[i].szKiller ) );
-
-				// Draw killers name
-				if( rgDeathNoticeList[i].KillerColor )
-					DrawSetTextColor( rgDeathNoticeList[i].KillerColor[0], rgDeathNoticeList[i].KillerColor[1], rgDeathNoticeList[i].KillerColor[2] );
-				x = 5 + DrawConsoleString( x, y + 4, rgDeathNoticeList[i].szKiller );
+				// Draw killer's name slightly higher inside the box, with strong fade
+				float textFade = fade * fade; // text fades even faster than bg
+				int textColor = (int)( 255.0f * textFade );
+				if( textColor < 0 ) textColor = 0;
+				if( textColor > 255 ) textColor = 255;
+				x = DrawUtfString( x + 5, y + 1, ScreenWidth, rgDeathNoticeList[i].szKiller, textColor, textColor, textColor );
 			}
 
-			r = 255; g = 80; b = 0;
-			if( rgDeathNoticeList[i].iTeamKill )
-			{
-				r = 10;	g = 240; b = 10;  // display it in sickly green
-			}
+			// Weapon icon: modulate brightness by fade so it also disappears
+			int iconColor = (int)( 255.0f * fade );
+			if( iconColor < 0 ) iconColor = 0;
+			if( iconColor > 255 ) iconColor = 255;
+			r = iconColor; g = iconColor; b = iconColor;
 
 			// Draw death weapon
 			SPR_Set( gHUD.GetSprite(id), r, g, b );
+			// pfnSPR_DrawAdditive doesn't take alpha directly, so rely on global fade in renderer
 			SPR_DrawAdditive( 0, x, y, &gHUD.GetSpriteRect(id) );
 
 			x += ( gHUD.GetSpriteRect(id).right - gHUD.GetSpriteRect(id).left );
 
-			// Draw victims name (if it was a player that was killed)
+			// Draw victim's name (if it was a player that was killed)
 			if( rgDeathNoticeList[i].iNonPlayerKill == FALSE )
 			{
-				if( rgDeathNoticeList[i].VictimColor )
-					DrawSetTextColor( rgDeathNoticeList[i].VictimColor[0], rgDeathNoticeList[i].VictimColor[1], rgDeathNoticeList[i].VictimColor[2] );
-				x = DrawConsoleString( x, y + 4, rgDeathNoticeList[i].szVictim );
+				float textFade = fade * fade;
+				int textColor = (int)( 255.0f * textFade );
+				if( textColor < 0 ) textColor = 0;
+				if( textColor > 255 ) textColor = 255;
+				x = DrawUtfString( x, y + 1, ScreenWidth, rgDeathNoticeList[i].szVictim, textColor, textColor, textColor );
 			}
 		}
 	}
@@ -259,6 +346,7 @@ int CHudDeathNotice::MsgFunc_DeathMsg( const char *pszName, int iSize, void *pbu
 	int spr = gHUD.GetSpriteIndex( killedwith );
 
 	rgDeathNoticeList[i].iId = spr;
+	rgDeathNoticeList[i].flStartTime = gHUD.m_flTime;
 
 	DEATHNOTICE_DISPLAY_TIME = CVAR_GET_FLOAT( "hud_deathnotice_time" );
 	rgDeathNoticeList[i].flDisplayTime = gHUD.m_flTime + DEATHNOTICE_DISPLAY_TIME;
@@ -302,13 +390,6 @@ int CHudDeathNotice::MsgFunc_DeathMsg( const char *pszName, int iSize, void *pbu
 		if( *killedwith && (*killedwith > 13 ) && strcmp( killedwith, "d_world" ) && !rgDeathNoticeList[i].iTeamKill )
 		{
 			ConsolePrint( " with " );
-
-			// replace the code names with the 'real' names
-			if( !strcmp( killedwith + 2, "egon" ) )
-				strcpy( killedwith, "d_gluon gun" );
-			if( !strcmp( killedwith + 2, "gauss" ) )
-				strcpy( killedwith, "d_tau cannon" );
-
 			ConsolePrint( killedwith + 2 ); // skip over the "d_" part
 		}
 

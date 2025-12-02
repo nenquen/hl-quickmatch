@@ -1659,9 +1659,6 @@ void CHalfLifeMultiplay::SendMOTDToClient( edict_t *client )
 
 int CMultiplayBusters::WeaponShouldRespawn( CBasePlayerItem *pWeapon )
 {
-	if( pWeapon->m_iId == WEAPON_EGON )
-		return GR_WEAPON_RESPAWN_NO;
-
 	return CHalfLifeMultiplay::WeaponShouldRespawn( pWeapon );
 }
 
@@ -1744,11 +1741,7 @@ void CMultiplayBusters::PlayerSpawn( CBasePlayer *pPlayer )
 
 bool IsPlayerBusting( CBaseEntity *pPlayer )
 {
-	if( g_pGameRules->IsBustingGame()
-	    && pPlayer && pPlayer->IsPlayer()
-	    && ((CBasePlayer*)pPlayer)->HasPlayerItemFromID( WEAPON_EGON ))
-		return true;
-
+	// Egon weapon has been removed, so no players can be busting
 	return false;
 }
 
@@ -1771,67 +1764,9 @@ CMultiplayBusters::CMultiplayBusters()
 
 void CMultiplayBusters::CheckForEgons( void )
 {
-	CBaseEntity *pPlayer;
-	CWeaponBox *pWeaponBox = NULL;
-	CBasePlayerItem *pWeapon;
-	CBasePlayer *pNewBuster = NULL;
-	int i, bestfrags = 9999;
-
-	if( m_flEgonBustingCheckTime <= 0.0f )
-	{
-		m_flEgonBustingCheckTime = gpGlobals->time + 10.0f;
-		return;
-	}
-
-	if( gpGlobals->time < m_flEgonBustingCheckTime )
-		return;
-
+	// Egon weapon and busting mechanic have been removed.
+	// Keep timer value sane but do no further processing.
 	m_flEgonBustingCheckTime = -1.0f;
-
-	for( i = 1; i <= gpGlobals->maxClients; i++ )
-	{
-		pPlayer = UTIL_PlayerByIndex( i );
-		if( IsPlayerBusting( pPlayer ))
-			return;
-	}
-
-	for( i = 1; i <= gpGlobals->maxClients; i++ )
-	{
-		pPlayer = UTIL_PlayerByIndex( i );
-
-		if( pPlayer && pPlayer->pev->frags < bestfrags )
-		{
-			pNewBuster = (CBasePlayer*)pPlayer;
-			bestfrags = pPlayer->pev->frags;
-		}
-	}
-
-	if( !pNewBuster )
-		return;
-
-	pNewBuster->GiveNamedItem( "weapon_egon" );
-
-	while( ( pWeaponBox = (CWeaponBox*)UTIL_FindEntityByClassname( pWeaponBox, "weaponbox" )))
-	{
-		// destroy weaponboxes with egons
-		for( i = 0; i < MAX_ITEM_TYPES; i++ )
-		{
-			pWeapon = pWeaponBox->m_rgpPlayerItems[i];
-
-			while( pWeapon )
-			{
-				if( pWeapon->m_iId != WEAPON_EGON )
-				{
-					pWeapon = pWeapon->m_pNext;
-					continue;
-				}
-
-				pWeaponBox->Kill();
-				pWeapon = 0;
-				i = MAX_ITEM_TYPES;
-			}
-		}
-	}
 }
 
 void CMultiplayBusters::Think( void )
@@ -1858,10 +1793,7 @@ void CMultiplayBusters::SetPlayerModel( CBasePlayer *pPlayer, BOOL bKnownBuster 
 
 void CMultiplayBusters::PlayerGotWeapon( CBasePlayer *pPlayer, CBasePlayerItem *pWeapon )
 {
-	if( pWeapon->m_iId != WEAPON_EGON )
-		return;
-
-	pPlayer->RemoveAllItems( FALSE );
+	// Egon weapon has been removed, nothing to do here
 	UTIL_ClientPrintAll( HUD_PRINTCENTER, "Long live the new Buster!" );
 	UTIL_ClientPrintAll( HUD_PRINTTALK, UTIL_VarArgs( "%s is busting!\n", STRING( pPlayer->pev->netname )));
 	SetPlayerModel( pPlayer, TRUE );

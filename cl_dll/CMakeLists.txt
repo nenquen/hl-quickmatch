@@ -65,8 +65,6 @@ endif()
 set (CLDLL_SOURCES
 	../dlls/crossbow.cpp
 	../dlls/crowbar.cpp
-	../dlls/egon.cpp
-	../dlls/gauss.cpp
 	../dlls/handgrenade.cpp
 	../dlls/hornetgun.cpp
 	../dlls/mp5.cpp

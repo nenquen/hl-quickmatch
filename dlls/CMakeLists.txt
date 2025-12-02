@@ -67,7 +67,6 @@ set (SVDLL_SOURCES
 	defaultai.cpp
 	doors.cpp
 	effects.cpp
-	egon.cpp
 	explode.cpp
 	flyingmonster.cpp
 	func_break.cpp
@@ -75,7 +74,6 @@ set (SVDLL_SOURCES
 	game.cpp
 	gamerules.cpp
 	gargantua.cpp
-	gauss.cpp
 	genericmonster.cpp
 	ggrenade.cpp
 	globals.cpp
