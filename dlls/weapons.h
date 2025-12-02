@@ -1008,6 +1008,7 @@ public:
 	void PrimaryAttack( void );
 	void SecondaryAttack( void );
 	BOOL Deploy( void );
+	void Holster( int skiplocal = 0 );
 	void Reload( void );
 	void WeaponIdle( void );
 

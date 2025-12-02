@@ -235,7 +235,7 @@ int CHudDeathNotice::Draw( float flTime )
 			int iconColor = (int)( 255.0f * fade );
 			if( iconColor < 0 ) iconColor = 0;
 			if( iconColor > 255 ) iconColor = 255;
-			r = iconColor; g = iwconColor; b = iconColor;
+			r = iconColor; g = iconColor; b = iconColor;
 
 			// Draw death weapon, vertically centered in the line
 			SPR_Set( gHUD.GetSprite(id), r, g, b );

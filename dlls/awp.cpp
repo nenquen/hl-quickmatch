@@ -78,16 +78,28 @@ int CAwp::AddToPlayer( CBasePlayer *pPlayer )
 	return FALSE;
 }
 
+void CAwp::Holster( int skiplocal /* = 0 */ )
+{
+	// Reset zoom/FOV when switching away from AWP
+	if( m_pPlayer && m_pPlayer->pev->fov != 0 )
+	{
+		m_pPlayer->pev->fov = m_pPlayer->m_iFOV = 0;
+		m_fInZoom = 0;
+	}
+
+	m_fInReload = FALSE;
+
+	// Call base weapon holster to clear view/world models
+	CBasePlayerWeapon::Holster( skiplocal );
+}
+
 BOOL CAwp::Deploy( void )
 {
-	// Silah çekme animasyonunu başlat (rifle uzantısını kullan)
-	if (DefaultDeploy( "models/v_awp.mdl", "models/p_awp.mdl", AWP_DRAW, "rifle" ))
+	// Start weapon draw animation (using 'rifle' extension)
+	if( DefaultDeploy( "models/v_awp.mdl", "models/p_awp.mdl", AWP_DRAW, "rifle" ) )
 	{
-		// Silah çekme sesini çal
-		EMIT_SOUND(ENT(m_pPlayer->pev), CHAN_ITEM, "weapons/deploy.wav", 0.8, ATTN_NORM);
-		
-		// Draw animasyonu için tam süre (90 frame @ 57fps = ~1.58s)
-		// Ekstra güvenlik için 1.7 saniye olarak ayarlıyorum
+		// Ensure the draw animation plays for its full duration (90 frames @ 57fps = ~1.58s)
+		// Using 1.7 seconds as a safe upper bound
 		m_flTimeWeaponIdle = m_flNextPrimaryAttack = m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 1.7f;
 		return TRUE;
 	}
@@ -130,8 +142,28 @@ void CAwp::PrimaryAttack( void )
 	Vector vecDir;
 	vecDir = m_pPlayer->FireBulletsPlayer( 1, vecSrc, vecAiming, VECTOR_CONE_1DEGREES, 8192, BULLET_PLAYER_357, 0, 0, m_pPlayer->pev, m_pPlayer->random_seed );
 
-	// Atış sonrası bekleme sürelerini artırıyorum
-	m_flNextPrimaryAttack = GetNextAttackDelay( 2.0f ); // Yavaş atış hızı (saniyede ~0.5 atış)
+	// Apply recoil (view punch) – stronger when not scoped, slightly softer when scoped
+	float flRecoil = ( m_pPlayer->pev->fov != 0 ) ? 4.0f : 6.0f;
+	m_pPlayer->pev->punchangle.x -= flRecoil;
+	m_pPlayer->pev->punchangle.y += RANDOM_FLOAT( -1.0f, 1.0f );
+
+	// Leave a bullet decal on the surface we hit
+	TraceResult tr;
+	UTIL_TraceLine( vecSrc, vecSrc + vecDir * 8192, dont_ignore_monsters, m_pPlayer->edict(), &tr );
+	if( tr.flFraction < 1.0f )
+	{
+		DecalGunshot( &tr, BULLET_PLAYER_357 );
+	}
+
+	// After firing, always reset zoom/FOV so the player must re-toggle scope manually
+	if( m_pPlayer->pev->fov != 0 )
+	{
+		m_pPlayer->pev->fov = m_pPlayer->m_iFOV = 0;
+		m_fInZoom = 0;
+	}
+
+	// Increase post-shot attack delay for slower fire rate (~0.5 shots per second)
+	m_flNextPrimaryAttack = GetNextAttackDelay( 2.0f );
 	m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 0.5f;
 
 	if( !m_iClip && m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType] <= 0 )
@@ -139,7 +171,7 @@ void CAwp::PrimaryAttack( void )
 		m_pPlayer->SetSuitUpdate( "!HEV_AMO0", FALSE, 0 );
 	}
 
-	// Atış sonrası idle animasyonu için bekleme süresi
+	// Idle animation delay after firing
 	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 2.0f;
 }
 
