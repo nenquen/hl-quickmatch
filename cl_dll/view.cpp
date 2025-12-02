@@ -99,7 +99,7 @@ cvar_t* v_centermove;
 cvar_t* v_centerspeed;
 
 cvar_t* cl_bobcycle;
-cvar_t* cl_bob;
+const float CL_BOB_VALUE = 0.006f;
 cvar_t* cl_bobup;
 cvar_t* cl_waterdist;
 cvar_t* cl_chasedist;
@@ -210,7 +210,7 @@ float V_CalcBob(struct ref_params_s* pparams)
 	VectorCopy(pparams->simvel, vel);
 	vel[2] = 0;
 
-	bob = sqrt(vel[0] * vel[0] + vel[1] * vel[1]) * cl_bob->value;
+	bob = sqrt(vel[0] * vel[0] + vel[1] * vel[1]) * CL_BOB_VALUE;
 	bob = bob * 0.3f + bob * 0.7f * sin(cycle);
 	bob = Q_min(bob, 4.0f);
 	bob = Q_max(bob, -7.0f);
@@ -445,7 +445,7 @@ void V_CalcBob(struct ref_params_s* pparams, float freqmod, calcBobMode_t mode, 
 	VectorCopy(pparams->simvel, vel);
 	vel[2] = 0;
 
-	bob = sqrt(vel[0] * vel[0] + vel[1] * vel[1]) * cl_bob->value;
+	bob = sqrt(vel[0] * vel[0] + vel[1] * vel[1]) * CL_BOB_VALUE;
 
 	if (mode == VB_SIN)
 		bob = bob * 0.3 + bob * 0.7 * sin(cycle);
@@ -1732,7 +1732,7 @@ void V_Init(void)
 	v_centerspeed = gEngfuncs.pfnRegisterVariable("v_centerspeed", "500", 0);
 
 	cl_bobcycle = gEngfuncs.pfnRegisterVariable("cl_bobcycle", "0.8", 0);// best default for my experimental gun wag (sjb)
-	cl_bob = gEngfuncs.pfnRegisterVariable("cl_bob", "0.006", FCVAR_ARCHIVE);// best default for my experimental gun wag (sjb)
+	// cl_bob is now a constant (0.006) and not a cvar
 	cl_bobup = gEngfuncs.pfnRegisterVariable("cl_bobup", "0.5", 0);
 	cl_waterdist = gEngfuncs.pfnRegisterVariable("cl_waterdist", "4", 0);
 	cl_chasedist = gEngfuncs.pfnRegisterVariable("cl_chasedist", "112", 0);
