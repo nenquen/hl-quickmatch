@@ -688,7 +688,8 @@ void V_CalcNormalRefdef(struct ref_params_s* pparams)
 		VectorCopy(pparams->cl_viewangles, angles);
 	}
 
-	AngleVectors(angles, pparams->forward, pparams->right, pparams->up);
+	gEngfuncs.V_CalcShake();
+	gEngfuncs.V_ApplyShake(pparams->vieworg, pparams->viewangles, 1.0f);
 
 	// don't allow cheats in multiplayer
 	if (pparams->maxclients <= 1)
@@ -699,23 +700,53 @@ void V_CalcNormalRefdef(struct ref_params_s* pparams)
 		}
 	}
 
-	// Treating cam_ofs[2] as the distance
+	// Third-person camera: use current viewangles for direction so that the
+	// camera sits behind the actual aiming ray. Apply a mild right-shoulder
+	// offset so the player model does not block the crosshair. Also trace from
+	// the eye position to the desired camera position so we don't push the
+	// camera inside walls.
 	if (CL_IsThirdPerson())
 	{
 		vec3_t ofs;
+		vec3_t eyeOrigin;
+		vec3_t desiredCam;
+		pmtrace_t* camTrace;
+
+		// Remember the current eye position before moving the camera.
+		VectorCopy(pparams->vieworg, eyeOrigin);
 
 		ofs[0] = ofs[1] = ofs[2] = 0.0f;
-
 		CL_CameraOffset((float*)&ofs);
 
-		VectorCopy(ofs, camAngles);
-		camAngles[ROLL] = 0;
+		// Base direction on the actual view angles (aim direction).
+		AngleVectors(pparams->viewangles, camForward, camRight, camUp);
 
-		AngleVectors(camAngles, camForward, camRight, camUp);
+		const float backDist = ofs[2];   // how far behind the player along aim
+		const float sideDist = 16.0f;    // small shift to the right shoulder
+		const float upDist   = 6.0f;     // slight vertical lift
 
+		// Compute ideal third-person camera position.
 		for (i = 0; i < 3; i++)
 		{
-			pparams->vieworg[i] += -ofs[2] * camForward[i];
+			desiredCam[i] = eyeOrigin[i]
+				- backDist * camForward[i]
+				+ sideDist * camRight[i]
+				+ upDist * camUp[i];
+		}
+
+		// Trace from eye to desired camera position to avoid placing the camera
+		// inside solid geometry.
+		camTrace = gEngfuncs.PM_TraceLine(eyeOrigin, desiredCam, PM_TRACELINE_PHYSENTSONLY, 2, -1);
+		if (camTrace)
+		{
+			// Pull back a little from the wall along the plane normal.
+			vec3_t safeCam;
+			VectorMA(camTrace->endpos, 4.0f, camTrace->plane.normal, safeCam);
+			VectorCopy(safeCam, pparams->vieworg);
+		}
+		else
+		{
+			VectorCopy(desiredCam, pparams->vieworg);
 		}
 	}
 
@@ -902,15 +933,13 @@ void V_CalcNormalRefdef(struct ref_params_s* pparams)
 		}
 	}
 
-	// Store off v_angles before munging for third person
+	// Store off v_angles before any further processing
 	v_angles = pparams->viewangles;
 	v_client_aimangles = pparams->cl_viewangles;
 	v_lastAngles = pparams->viewangles;
 	//v_cl_angles = pparams->cl_viewangles;	// keep old user mouse angles !
-	if (CL_IsThirdPerson())
-	{
-		VectorCopy(camAngles, pparams->viewangles);
-	}
+	// In third person we only move the camera origin; we keep viewangles driven
+	// by normal input so that crosshair and bullet direction remain aligned.
 
 	// Apply this at all times
 	{

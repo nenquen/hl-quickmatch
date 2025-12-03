@@ -89,15 +89,18 @@ int cam_distancemove;
 extern int mouse_x, mouse_y;  //used to determine what the current x and y values are
 int cam_old_mouse_x, cam_old_mouse_y; //holds the last ticks mouse movement
 POINT cam_mouse;
+
 //-------------------------------------------------- Local Variables
 
 static kbutton_t cam_pitchup, cam_pitchdown, cam_yawleft, cam_yawright;
 static kbutton_t cam_in, cam_out, cam_move;
+static kbutton_t cam_toggle;
 
 //-------------------------------------------------- Prototypes
 
 void CAM_ToThirdPerson(void);
 void CAM_ToFirstPerson(void);
+void CAM_ToggleThirdPerson(void);
 void CAM_StartDistance(void);
 void CAM_EndDistance(void);
 
@@ -168,9 +171,6 @@ void DLLEXPORT CAM_Think( void )
 	int i;
 #endif
 	vec3_t viewangles;
-
-	if( gEngfuncs.GetMaxClients() > 1 && CL_IsThirdPerson() )
-		CAM_ToFirstPerson();
 
 	switch( (int)cam_command->value )
 	{
@@ -409,7 +409,18 @@ void DLLEXPORT CAM_Think( void )
 #endif
 	cam_ofs[0] = camAngles[0];
 	cam_ofs[1] = camAngles[1];
-	cam_ofs[2] = dist;
+	cam_ofs[2] = camAngles[2];
+
+	// If we are transitioning back to first person, let the distance smoothly
+	// collapse toward CAM_MIN_DIST, and only then fully disable third person.
+	if( cam_thirdperson && cam_idealdist->value <= CAM_MIN_DIST + 0.1f )
+	{
+		if( fabs( cam_ofs[2] - CAM_MIN_DIST ) <= 1.0f )
+		{
+			cam_thirdperson = 0;
+			cam_ofs[2] = CAM_MIN_DIST;
+		}
+	}
 }
 
 extern void KeyDown( kbutton_t *b );	// HACK
@@ -478,13 +489,6 @@ void CAM_OutUp( void )
 void CAM_ToThirdPerson( void )
 {
 	vec3_t viewangles;
-#if !_DEBUG
-	if( gEngfuncs.GetMaxClients() > 1 )
-	{
-		// no thirdperson in multiplayer.
-		return;
-	}
-#endif
 	gEngfuncs.GetViewAngles( (float *)viewangles );
 
 	if( !cam_thirdperson )
@@ -494,6 +498,11 @@ void CAM_ToThirdPerson( void )
 		cam_ofs[YAW] = viewangles[YAW]; 
 		cam_ofs[PITCH] = viewangles[PITCH]; 
 		cam_ofs[2] = CAM_MIN_DIST; 
+
+		// Set up a nicer default thirdperson offset: slightly pitched down and quite close behind.
+		cam_idealpitch->value = 10.0f;
+		cam_idealyaw->value = 0.0f;
+		cam_idealdist->value = 72.0f;
 	}
 
 	gEngfuncs.Cvar_SetValue( "cam_command", 0 );
@@ -501,9 +510,30 @@ void CAM_ToThirdPerson( void )
 
 void CAM_ToFirstPerson( void ) 
 { 
-	cam_thirdperson = 0;
-	
+	// Don't instantly snap out of third person. Instead, move the ideal
+	// distance back to first-person and let CAM_Think smoothly lerp the
+	// camera back in. Once close enough, CAM_Think will turn off
+	// cam_thirdperson.
+	if( cam_thirdperson )
+	{
+		cam_idealdist->value = CAM_MIN_DIST;
+	}
+
 	gEngfuncs.Cvar_SetValue( "cam_command", 0 );
+}
+
+void CAM_ToggleThirdPerson( void )
+{
+	// Use the cam_command state machine so that transitions go through the
+	// existing smooth interpolation in CAM_Think.
+	if( cam_thirdperson )
+	{
+		gEngfuncs.Cvar_SetValue( "cam_command", CAM_COMMAND_TOFIRSTPERSON );
+	}
+	else
+	{
+		gEngfuncs.Cvar_SetValue( "cam_command", CAM_COMMAND_TOTHIRDPERSON );
+	}
 }
 
 void CAM_ToggleSnapto( void )
@@ -532,6 +562,8 @@ void CAM_Init( void )
 	gEngfuncs.pfnAddCommand( "+camdistance", CAM_StartDistance );
 	gEngfuncs.pfnAddCommand( "-camdistance", CAM_EndDistance );
 	gEngfuncs.pfnAddCommand( "snapto", CAM_ToggleSnapto );
+	// Convenience toggle that switches between first and third person.
+	gEngfuncs.pfnAddCommand( "thirdperson_toggle", CAM_ToggleThirdPerson );
 
 	cam_command			= gEngfuncs.pfnRegisterVariable( "cam_command", "0", 0 );	 // tells camera to go to thirdperson
 	cam_snapto			= gEngfuncs.pfnRegisterVariable( "cam_snapto", "0", 0 );	 // snap to thirdperson view
@@ -546,6 +578,10 @@ void CAM_Init( void )
 	c_minyaw			= gEngfuncs.pfnRegisterVariable( "c_minyaw", "-135.0", 0 );
 	c_maxdistance			= gEngfuncs.pfnRegisterVariable( "c_maxdistance", "200.0", 0 );
 	c_mindistance			= gEngfuncs.pfnRegisterVariable( "c_mindistance", "30.0", 0 );
+
+	// Set a default keybind so that V toggles thirdperson on/off out of the box.
+	// Players can change this binding later if they want.
+	gEngfuncs.pfnClientCmd( "bind v thirdperson_toggle\n" );
 }
 
 void CAM_ClearStates( void )

@@ -1,5 +1,13 @@
 #include "hud_crosshair.h"
 #include "cl_util.h"
+#include "pm_defs.h"
+#include "pmtrace.h"
+#include "triangleapi.h"
+#include "camera.h"
+
+extern "C" int CL_IsThirdPerson( void );
+extern vec3_t v_origin;
+extern vec3_t v_angles;
 
 // Custom crosshair implementation inspired by csldr xhair
 
@@ -80,9 +88,50 @@ int CHudCrosshair::Draw(float flTime)
 		return 1;
 	}
 
-	// position
-	const int centerX = ScreenWidth  / 2;
-	const int centerY = ScreenHeight / 2;
+	// position (default: screen center)
+	int centerX = ScreenWidth  / 2;
+	int centerY = ScreenHeight / 2;
+
+	// In third person, move the crosshair to the actual aim hit point so that
+	// it reflects where the camera is aiming, not just the screen center.
+	if( CL_IsThirdPerson() )
+	{
+		vec3_t start, forward, right, up, end;
+		AngleVectors( v_angles, forward, right, up );
+
+		// v_origin is the current camera position (already offset back/right/up).
+		// Reconstruct an approximate eye position by undoing the same offsets
+		// we applied in V_CalcNormalRefdef: back along forward, minus right/up.
+		const float backDist = cam_ofs[2];   // same value used for camera distance
+		const float sideDist = 16.0f;       // must match view.cpp
+		const float upDist   = 6.0f;        // must match view.cpp
+
+		VectorCopy( v_origin, start );
+		VectorMA( start,  backDist, forward, start );   // move forward to player
+		VectorMA( start, -sideDist, right,   start );   // undo right-shoulder shift
+		VectorMA( start, -upDist,   up,      start );   // undo vertical lift
+
+		VectorMA( start, 4096.0f, forward, end );
+
+		pmtrace_t *trace = gEngfuncs.PM_TraceLine( start, end, PM_TRACELINE_PHYSENTSONLY, 2, -1 );
+		float world[3], screen[3];
+
+		if( trace )
+		{
+			VectorCopy( trace->endpos, world );
+		}
+		else
+		{
+			VectorCopy( end, world );
+		}
+
+		// Project world-space hit position to screen-space.
+		if( !gEngfuncs.pTriAPI->WorldToScreen( world, screen ) )
+		{
+			centerX = (int)XPROJECT( screen[0] );
+			centerY = (int)YPROJECT( screen[1] );
+		}
+	}
 
 	const float alpha = 1.0f;
 	int r = 0, g = 255, b = 0;

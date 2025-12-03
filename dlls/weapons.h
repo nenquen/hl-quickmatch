@@ -493,7 +493,9 @@ public:
 	int AddToPlayer( CBasePlayer *pPlayer );
 
 	void PrimaryAttack( void );
+	void SecondaryAttack( void );
 	int Swing( int fFirst );
+	int HeavySwing( void );
 	BOOL Deploy( void );
 	void Holster( int skiplocal = 0 );
 #if CROWBAR_IDLE_ANIM

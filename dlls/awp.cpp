@@ -95,8 +95,8 @@ void CAwp::Holster( int skiplocal /* = 0 */ )
 
 BOOL CAwp::Deploy( void )
 {
-	// Start weapon draw animation (using 'rifle' extension)
-	if( DefaultDeploy( "models/v_awp.mdl", "models/p_awp.mdl", AWP_DRAW, "rifle" ) )
+	// Start weapon draw animation using the same hold type as the crossbow ('bow')
+	if( DefaultDeploy( "models/v_awp.mdl", "models/p_awp.mdl", AWP_DRAW, "bow" ) )
 	{
 		// Ensure the draw animation plays for its full duration (90 frames @ 57fps = ~1.58s)
 		// Using 1.7 seconds as a safe upper bound
