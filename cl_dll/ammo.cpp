@@ -528,7 +528,9 @@ int CHudAmmo::MsgFunc_WeapPickup( const char *pszName, int iSize, void *pbuf )
 	BEGIN_READ( pbuf, iSize );
 	int iIndex = READ_BYTE();
 
-	// Add the weapon to the history
+	// Add the weapon to the pickup history so its name is shown immediately
+	// when picked up. Ammo pickups will later merge into this row and append
+	// the "( + count )" suffix.
 	gHR.AddToHistory( HISTSLOT_WEAP, iIndex );
 
 	return 1;

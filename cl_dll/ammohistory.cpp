@@ -48,6 +48,48 @@ void HistoryResource::AddToHistory( int iType, int iId, int iCount )
 	if( iType == HISTSLOT_AMMO && !iCount )
 		return;  // no amount, so don't add
 
+	// For ammo pickups, merge into an existing weapon history entry instead of
+	// creating a separate AMMO row. This way the weapon name and ammo delta are
+	// shown together, e.g. "mp5 ( + 35 )".
+	if( iType == HISTSLOT_AMMO )
+	{
+		for( int i = 0; i < MAX_HISTORY; ++i )
+		{
+			if( rgAmmoHistory[i].type != HISTSLOT_WEAP )
+				continue;
+			
+			WEAPON* pWeap = gWR.GetWeapon( rgAmmoHistory[i].iId );
+			if( !pWeap )
+				continue;
+			
+			if( pWeap->iAmmoType == iId || pWeap->iAmmo2Type == iId )
+			{
+				HISTORY_DRAW_TIME = CVAR_GET_FLOAT( "hud_drawhistory_time" );
+				rgAmmoHistory[i].iCount += iCount;
+				rgAmmoHistory[i].DisplayTime = gHUD.m_flTime + HISTORY_DRAW_TIME;
+				return;
+			}
+		}
+
+		// No existing weapon history row to merge into. Find a weapon that uses
+		// this ammo id and create a new WEAP history entry for it so that ammo
+		// pickups still show up as "weapon ( + count )" even if the weapon
+		// wasn't just picked up.
+		for( int w = 0; w < MAX_WEAPONS; ++w )
+		{
+			WEAPON* pWeap = gWR.GetWeapon( w );
+			if( !pWeap || pWeap->iId == 0 )
+				continue;
+			if( pWeap->iAmmoType == iId || pWeap->iAmmo2Type == iId )
+			{
+				// Redirect this history entry to be a weapon entry for this weapon.
+				iType = HISTSLOT_WEAP;
+				iId = pWeap->iId;
+				break;
+			}
+		}
+	}
+
 	if( ( ( ( AMMO_PICKUP_GAP * iCurrentHistorySlot ) + AMMO_PICKUP_PICK_HEIGHT ) > AMMO_PICKUP_HEIGHT_MAX ) || ( iCurrentHistorySlot >= MAX_HISTORY ) )
 	{
 		// the pic would have to be drawn too high
@@ -107,6 +149,10 @@ void HistoryResource::CheckClearHistory( void )
 //
 int HistoryResource::DrawAmmoHistory( float flTime )
 {
+	SCREENINFO screenInfo;
+	screenInfo.iSize = sizeof( SCREENINFO );
+	gEngfuncs.pfnGetScreenInfo( &screenInfo );
+
 	for( int i = 0; i < MAX_HISTORY; i++ )
 	{
 		if( rgAmmoHistory[i].type )
@@ -119,51 +165,93 @@ int HistoryResource::DrawAmmoHistory( float flTime )
 				memset( &rgAmmoHistory[i], 0, sizeof(HIST_ITEM) );
 				CheckClearHistory();
 			}
-			else if( rgAmmoHistory[i].type == HISTSLOT_AMMO )
-			{
-				wrect_t rcPic;
-				HSPRITE *spr = gWR.GetAmmoPicFromWeapon( rgAmmoHistory[i].iId, rcPic );
-
-				int r, g, b;
-				UnpackRGB( r, g, b, RGB_YELLOWISH );
-				float scale = ( rgAmmoHistory[i].DisplayTime - flTime ) * 80;
-				ScaleColors( r, g, b, Q_min( scale, 255 ) );
-
-				// Draw the pic
-				int ypos = ScreenHeight - (AMMO_PICKUP_PICK_HEIGHT + (AMMO_PICKUP_GAP * i));
-				int xpos = ScreenWidth - (rcPic.right - rcPic.left);
-				if( spr && *spr )    // weapon isn't loaded yet so just don't draw the pic
-				{
-					// the dll has to make sure it has sent info the weapons you need
-					SPR_Set( *spr, r, g, b );
-					SPR_DrawAdditive( 0, xpos, ypos, &rcPic );
-				}
-
-				// do not draw black console string
-				if( !( ( hud_textmode->value == 2 ) && ( scale < 200 ) ) )
-					// Draw the number
-					gHUD.DrawHudNumberString( xpos - 14, ypos, xpos - 104, rgAmmoHistory[i].iCount, r, g, b );
-			}
 			else if( rgAmmoHistory[i].type == HISTSLOT_WEAP )
 			{
 				WEAPON *weap = gWR.GetWeapon( rgAmmoHistory[i].iId );
-
+				
 				if( !weap )
 					return 1;  // we don't know about the weapon yet, so don't draw anything
 
-				int r, g, b;
-				UnpackRGB( r,g,b, RGB_YELLOWISH );
-
-				if( !gWR.HasAmmo( weap ) )
-					UnpackRGB( r, g, b, RGB_REDISH );	// if the weapon doesn't have ammo, display it as red
-
-				float scale = ( rgAmmoHistory[i].DisplayTime - flTime ) * 80;
-				ScaleColors( r, g, b, Q_min( scale, 255 ) );
-
+				// Show weapon pickup as text instead of an icon. Strip the "weapon_" prefix
+				// so only the short name is shown (e.g. "glock", "mp5", "knife").
+				char displayName[64];
+				const char* srcName = weap->szName;
+				const char* prefix = "weapon_";
+				if( !strncmp( srcName, prefix, strlen( prefix ) ) )
+					strlcpy( displayName, srcName + strlen( prefix ), sizeof( displayName ) );
+				else
+					strlcpy( displayName, srcName, sizeof( displayName ) );
+				
+				// If ammo has been picked up for this weapon (merged via HISTSLOT_AMMO),
+				// append a "( + count )" suffix.
+				char fullText[96];
+				if( rgAmmoHistory[i].iCount > 0 )
+				{
+					_snprintf( fullText, sizeof( fullText ), "%s ( + %d )", displayName, rgAmmoHistory[i].iCount );
+				}
+				else
+				{
+					strlcpy( fullText, displayName, sizeof( fullText ) );
+				}
+				
+				// Fade factor as before.
+				float scale = ( rgAmmoHistory[i].DisplayTime - flTime ) * 80.0f;
+				float clampedScale = Q_min( scale, 255.0f );
+				if( clampedScale < 0.0f )
+					clampedScale = 0.0f;
+				
 				int ypos = ScreenHeight - ( AMMO_PICKUP_PICK_HEIGHT + ( AMMO_PICKUP_GAP * i ) );
-				int xpos = ScreenWidth - ( weap->rcInactive.right - weap->rcInactive.left );
-				SPR_Set( weap->hInactive, r, g, b );
-				SPR_DrawAdditive( 0, xpos, ypos, &weap->rcInactive );
+				
+				// Measure text width using console font utilities.
+				int textWidth = ConsoleStringLen( fullText );
+				// Use very small, resolution-scaled padding so the box closely hugs text.
+				int paddingXLeft = XRES( 2 );
+				int paddingXRight = 0; // no extra inner padding on the right
+				int paddingY = YRES( 2 );
+				int boxWidth = textWidth + paddingXLeft + paddingXRight;
+				int boxHeight = gHUD.m_iFontHeight + paddingY * 2;
+				
+				// Position box anchored near the right side of the screen with a tiny margin.
+				int rightMargin = XRES( 2 );
+				int boxX = screenInfo.iWidth - boxWidth - rightMargin;
+				int boxY = ypos;
+				
+				// Background: translucent black, alpha similar to death notices.
+				int bgR = 0, bgG = 0, bgB = 0;
+				int bgA = (int)( 100.0f * ( clampedScale / 255.0f ) );
+				if( bgA > 0 )
+				{
+					gEngfuncs.pfnFillRGBABlend( boxX, boxY, boxWidth, boxHeight, bgR, bgG, bgB, bgA );
+				}
+				
+				// Text position inside the box.
+				int textX = boxX + paddingXLeft;
+				int textY = boxY + paddingY;
+				
+				// Compute green->white flash for the text based on how new this entry is.
+				float totalTime = CVAR_GET_FLOAT( "hud_drawhistory_time" );
+				if( totalTime <= 0.0f )
+					totalTime = 1.0f;
+				float remaining = rgAmmoHistory[i].DisplayTime - flTime;
+				float elapsed = totalTime - remaining;
+				if( elapsed < 0.0f )
+					elapsed = 0.0f;
+				
+				const float flashWindow = 0.4f;
+				float flashT = 0.0f;
+				if( flashWindow > 0.0f && elapsed < flashWindow )
+				{
+					flashT = 1.0f - ( elapsed / flashWindow );
+					if( flashT < 0.0f ) flashT = 0.0f;
+					if( flashT > 1.0f ) flashT = 1.0f;
+				}
+				
+				// Text color: blend from green to white based on flashT, then apply alpha fade.
+				int r = (int)( ( 1.0f - flashT ) * 255.0f );
+				int g = 255;
+				int b = (int)( ( 1.0f - flashT ) * 255.0f );
+				ScaleColors( r, g, b, (int)clampedScale );
+				DrawUtfString( textX, textY, ScreenWidth, fullText, r, g, b );
 			}
 			else if( rgAmmoHistory[i].type == HISTSLOT_ITEM )
 			{
@@ -188,4 +276,20 @@ int HistoryResource::DrawAmmoHistory( float flTime )
 	}
 
 	return 1;
+}
+
+const char* WeaponsResource::GetAmmoName( int iAmmoId )
+{
+	for( int i = 0; i < MAX_WEAPONS; ++i )
+	{
+		if( rgWeapons[i].iId == 0 )
+			continue;
+
+		if( rgWeapons[i].iAmmoType == iAmmoId || rgWeapons[i].iAmmo2Type == iAmmoId )
+		{
+			return rgWeapons[i].szName;
+		}
+	}
+
+	return NULL;
 }

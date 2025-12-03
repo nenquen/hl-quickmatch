@@ -93,6 +93,8 @@ public:
 	int CountAmmo( int iId );
 
 	HSPRITE* GetAmmoPicFromWeapon( int iAmmoId, wrect_t& rect );
+	const char* GetAmmoName( int iAmmoId );
+
 };
 
 extern WeaponsResource gWR;
