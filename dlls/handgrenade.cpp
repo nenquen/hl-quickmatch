@@ -78,7 +78,11 @@ int CHandGrenade::GetItemInfo( ItemInfo *p )
 BOOL CHandGrenade::Deploy()
 {
 	m_flReleaseThrow = -1;
-	return DefaultDeploy( "models/v_grenade.mdl", "models/p_grenade.mdl", HANDGRENADE_DRAW, "crowbar" );
+	BOOL result = DefaultDeploy( "models/v_grenade.mdl", "models/p_grenade.mdl", HANDGRENADE_DRAW, "crowbar" );
+	// Match deploy animation duration (1.37s) before grenade can be thrown again.
+	m_flNextPrimaryAttack = GetNextAttackDelay( 1.37f );
+	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 1.37f;
+	return result;
 }
 
 BOOL CHandGrenade::CanDeploy( void )
@@ -94,7 +98,8 @@ BOOL CHandGrenade::CanHolster( void )
 
 void CHandGrenade::Holster( int skiplocal /* = 0 */ )
 {
-	m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 0.5f;
+	// Match holster animation duration (1.37s).
+	m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 1.37f;
 
 	if( m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType] )
 	{
@@ -124,6 +129,7 @@ void CHandGrenade::PrimaryAttack()
 		m_flReleaseThrow = 0.0f;
 
 		SendWeaponAnim( HANDGRENADE_PINPULL );
+		// Short pullpin lockout so grenade can be thrown quickly (0.5s).
 		m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 0.5f;
 	}
 }
@@ -182,8 +188,9 @@ void CHandGrenade::WeaponIdle( void )
 		m_flReleaseThrow = 0.0f;
 #endif
 		m_flStartThrow = 0.0f;
-		m_flNextPrimaryAttack = GetNextAttackDelay( 0.5f );
-		m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 0.5f;
+		// Match throw animation duration (0.53s).
+		m_flNextPrimaryAttack = GetNextAttackDelay( 0.53f );
+		m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 0.53f;
 
 		m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType]--;
 
@@ -192,7 +199,8 @@ void CHandGrenade::WeaponIdle( void )
 			// just threw last grenade
 			// set attack times in the future, and weapon idle in the future so we can see the whole throw
 			// animation, weapon idle will automatically retire the weapon for us.
-			m_flTimeWeaponIdle = m_flNextSecondaryAttack = m_flNextPrimaryAttack = GetNextAttackDelay( 0.5f );// ensure that the animation can finish playing
+			// Ensure last-throw animation (0.53s) can finish playing.
+			m_flTimeWeaponIdle = m_flNextSecondaryAttack = m_flNextPrimaryAttack = GetNextAttackDelay( 0.53f );
 		}
 		return;
 	}
