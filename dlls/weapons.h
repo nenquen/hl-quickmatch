@@ -890,6 +890,7 @@ public:
 
 	void PrimaryAttack( void );
 	BOOL Deploy( void );
+	BOOL CanDeploy( void );
 	BOOL CanHolster( void );
 	void Holster( int skiplocal = 0 );
 	void WeaponIdle( void );

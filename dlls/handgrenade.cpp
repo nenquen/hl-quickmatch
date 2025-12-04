@@ -81,6 +81,11 @@ BOOL CHandGrenade::Deploy()
 	return DefaultDeploy( "models/v_grenade.mdl", "models/p_grenade.mdl", HANDGRENADE_DRAW, "crowbar" );
 }
 
+BOOL CHandGrenade::CanDeploy( void )
+{
+	return m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType] != 0;
+}
+
 BOOL CHandGrenade::CanHolster( void )
 {
 	// can only holster hand grenades when not primed!
