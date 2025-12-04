@@ -80,7 +80,7 @@ def build(bld):
 		'public/safe_snprintf.c',
 		'pm_shared/*.c',
 		'dlls/crossbow.cpp',
-		'dlls/crowbar.cpp',
+		'dlls/knife.cpp',
 		'dlls/egon.cpp',
 		'dlls/gauss.cpp',
 		'dlls/glock.cpp',

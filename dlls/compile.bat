@@ -26,7 +26,7 @@ set SOURCES=agrunt.cpp ^
 	combat.cpp ^
 	controller.cpp ^
 	crossbow.cpp ^
-	crowbar.cpp ^
+	knife.cpp ^
 	defaultai.cpp ^
 	doors.cpp ^
 	effects.cpp ^

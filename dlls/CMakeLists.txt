@@ -63,7 +63,7 @@ set (SVDLL_SOURCES
 	combat.cpp
 	controller.cpp
 	crossbow.cpp
-	crowbar.cpp
+	knife.cpp
 	defaultai.cpp
 	doors.cpp
 	effects.cpp
