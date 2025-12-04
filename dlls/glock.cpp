@@ -111,12 +111,15 @@ BOOL CGlock::Deploy()
 
 void CGlock::SecondaryAttack( void )
 {
-	GlockFire( 0.1f, 0.2f, FALSE );
+	// Disable alternate rapid-fire mode; right click no longer fires.
+	return;
 }
 
 void CGlock::PrimaryAttack( void )
 {
-	GlockFire( 0.01f, 0.3f, TRUE );
+	// Server/client generic ItemPostFrame handles semi-auto behavior.
+	// Here we just perform a single shot when asked to fire.
+	GlockFire( 0.01f, 0.13f, TRUE );
 }
 
 void CGlock::GlockFire( float flSpread, float flCycleTime, BOOL fUseAutoAim )
