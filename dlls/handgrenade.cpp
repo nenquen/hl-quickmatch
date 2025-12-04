@@ -140,9 +140,11 @@ void CHandGrenade::WeaponIdle( void )
 		else
 			angThrow.x = -10.0f + angThrow.x * ( ( 90.0f + 10.0f ) / 90.0f );
 
-		float flVel = ( 90.0f - angThrow.x ) * 6.5f;
-		if( flVel > 1000.0f )
-			flVel = 1000.0f;
+		// Match CS 1.6 HE grenade throw mechanics: slightly lower velocity scale
+		// and a lower max speed cap.
+		float flVel = ( 90.0f - angThrow.x ) * 6.0f;
+		if( flVel > 750.0f )
+			flVel = 750.0f;
 
 		UTIL_MakeVectors( angThrow );
 
@@ -150,11 +152,9 @@ void CHandGrenade::WeaponIdle( void )
 
 		Vector vecThrow = gpGlobals->v_forward * flVel + m_pPlayer->pev->velocity;
 
-		// alway explode 3 seconds after the pin was pulled
-		float time = m_flStartThrow - gpGlobals->time + 3.0f;
-		if( time < 0.0f )
-			time = 0.0f;
-
+		// In CS 1.6, HE grenades use a fixed fuse time (~1.5 seconds)
+		// instead of depending on how long the pin has been pulled.
+		float time = 1.5f;
 		CGrenade::ShootTimed( m_pPlayer->pev, vecSrc, vecThrow, time );
 
 		if( flVel < 500.0f )
