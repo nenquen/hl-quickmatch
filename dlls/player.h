@@ -127,6 +127,8 @@ public:
 
 	unsigned int		m_afPhysicsFlags;	// physics flags - set when 'normal' physics should be revisited or overriden
 	float				m_fNextSuicideTime; // the time after which the player can next use the suicide command
+	float				m_flNextWhistleTime; // the time after which the player can next use the whistle command
+	float				m_flWhistleGlowEndTime; // time until which the whistle glow outline is active
 
 	// these are time-sensitive things that we keep track of
 	float				m_flTimeStepSound;	// when the last stepping sound was made

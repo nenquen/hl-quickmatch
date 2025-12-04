@@ -548,6 +548,21 @@ void ClientCommand( edict_t *pEntity )
 			CLIENT_PRINTF( pEntity, print_console, UTIL_VarArgs( "\"fov\" is \"%d\"\n", (int)GetClassPtr( (CBasePlayer *)pev )->m_iFOV ) );
 		}
 	}
+	else if( FStrEq( pcmd, "whistle" ) )
+	{
+		CBasePlayer *pPlayer = GetClassPtr( (CBasePlayer *)pev );
+
+		if( pPlayer->m_flNextWhistleTime > gpGlobals->time )
+		{
+			// still on cooldown, do nothing
+			return;
+		}
+
+		pPlayer->m_flNextWhistleTime = gpGlobals->time + 15.0f;
+		pPlayer->m_flWhistleGlowEndTime = gpGlobals->time + 8.0f;
+
+		EMIT_SOUND( ENT( pev ), CHAN_VOICE, "player/whistle.wav", 1.0f, ATTN_NORM );
+	}
 	else if( FStrEq( pcmd, "use" ) )
 	{
 		GetClassPtr( (CBasePlayer *)pev )->SelectItem( (char *)CMD_ARGV( 1 ) );
@@ -924,6 +939,7 @@ void ClientPrecache( void )
 	PRECACHE_SOUND( "player/pl_pain5.wav" );
 	PRECACHE_SOUND( "player/pl_pain6.wav" );
 	PRECACHE_SOUND( "player/pl_pain7.wav" );
+	PRECACHE_SOUND( "player/whistle.wav" );
 
 	PRECACHE_MODEL( "models/player.mdl" );
 

@@ -2696,6 +2696,23 @@ void CBasePlayer::PostThink()
 	StudioFrameAdvance();
 	CheckPowerups( pev );
 
+	// Handle whistle glow outline effect
+	if( m_flWhistleGlowEndTime > 0 )
+	{
+		if( gpGlobals->time < m_flWhistleGlowEndTime )
+		{
+			pev->renderfx = kRenderFxGlowShell;
+			pev->renderamt = 60;
+			pev->rendercolor = Vector( 0, 255, 0 );
+		}
+		else
+		{
+			m_flWhistleGlowEndTime = 0;
+			pev->renderfx = kRenderFxNone;
+			pev->renderamt = 0;
+		}
+	}
+
 	UpdatePlayerSound();
 pt_end:
 	if( pev->deadflag == DEAD_NO )
@@ -2995,6 +3012,8 @@ void CBasePlayer::Spawn( void )
 	m_lastx = m_lasty = 0;
 
 	m_flNextChatTime = gpGlobals->time;
+	m_flNextWhistleTime = 0;
+	m_flWhistleGlowEndTime = 0;
 
 	g_pGameRules->PlayerSpawn( this );
 }
