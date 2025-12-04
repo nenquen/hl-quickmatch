@@ -45,50 +45,10 @@ struct ITEM_INFO
 
 void HistoryResource::AddToHistory( int iType, int iId, int iCount )
 {
-	if( iType == HISTSLOT_AMMO && !iCount )
-		return;  // no amount, so don't add
-
-	// For ammo pickups, merge into an existing weapon history entry instead of
-	// creating a separate AMMO row. This way the weapon name and ammo delta are
-	// shown together, e.g. "mp5 ( + 35 )".
+	// Do not show anything for pure ammo pickups anymore.
+	// Only weapon pickups (HISTSLOT_WEAP) and items (HISTSLOT_ITEM) create HUD entries.
 	if( iType == HISTSLOT_AMMO )
-	{
-		for( int i = 0; i < MAX_HISTORY; ++i )
-		{
-			if( rgAmmoHistory[i].type != HISTSLOT_WEAP )
-				continue;
-			
-			WEAPON* pWeap = gWR.GetWeapon( rgAmmoHistory[i].iId );
-			if( !pWeap )
-				continue;
-			
-			if( pWeap->iAmmoType == iId || pWeap->iAmmo2Type == iId )
-			{
-				HISTORY_DRAW_TIME = CVAR_GET_FLOAT( "hud_drawhistory_time" );
-				rgAmmoHistory[i].iCount += iCount;
-				rgAmmoHistory[i].DisplayTime = gHUD.m_flTime + HISTORY_DRAW_TIME;
-				return;
-			}
-		}
-
-		// No existing weapon history row to merge into. Find a weapon that uses
-		// this ammo id and create a new WEAP history entry for it so that ammo
-		// pickups still show up as "weapon ( + count )" even if the weapon
-		// wasn't just picked up.
-		for( int w = 0; w < MAX_WEAPONS; ++w )
-		{
-			WEAPON* pWeap = gWR.GetWeapon( w );
-			if( !pWeap || pWeap->iId == 0 )
-				continue;
-			if( pWeap->iAmmoType == iId || pWeap->iAmmo2Type == iId )
-			{
-				// Redirect this history entry to be a weapon entry for this weapon.
-				iType = HISTSLOT_WEAP;
-				iId = pWeap->iId;
-				break;
-			}
-		}
-	}
+		return;
 
 	if( ( ( ( AMMO_PICKUP_GAP * iCurrentHistorySlot ) + AMMO_PICKUP_PICK_HEIGHT ) > AMMO_PICKUP_HEIGHT_MAX ) || ( iCurrentHistorySlot >= MAX_HISTORY ) )
 	{
@@ -204,15 +164,15 @@ int HistoryResource::DrawAmmoHistory( float flTime )
 				
 				// Measure text width using console font utilities.
 				int textWidth = ConsoleStringLen( fullText );
-				// Use very small, resolution-scaled padding so the box closely hugs text.
+				// Use some padding so there is visible empty space on the right side again.
 				int paddingXLeft = XRES( 2 );
-				int paddingXRight = 0; // no extra inner padding on the right
+				int paddingXRight = XRES( 20 );
 				int paddingY = YRES( 2 );
 				int boxWidth = textWidth + paddingXLeft + paddingXRight;
 				int boxHeight = gHUD.m_iFontHeight + paddingY * 2;
 				
-				// Position box anchored near the right side of the screen with a tiny margin.
-				int rightMargin = XRES( 2 );
+				// Position box anchored near the right side of the screen with a small margin.
+				int rightMargin = XRES( 6 );
 				int boxX = screenInfo.iWidth - boxWidth - rightMargin;
 				int boxY = ypos;
 				

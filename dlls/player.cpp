@@ -2701,13 +2701,16 @@ void CBasePlayer::PostThink()
 	{
 		if( gpGlobals->time < m_flWhistleGlowEndTime )
 		{
+			// Use a light white glow shell as a subtle outline around the player model.
+			// We don't force a special rendermode here; just a low alpha shell.
 			pev->renderfx = kRenderFxGlowShell;
-			pev->renderamt = 60;
-			pev->rendercolor = Vector( 0, 255, 0 );
+			pev->renderamt = 35; // slightly stronger than before but still subtle
+			pev->rendercolor = Vector( 255, 255, 255 );
 		}
 		else
 		{
 			m_flWhistleGlowEndTime = 0;
+			// Reset only the fields we changed.
 			pev->renderfx = kRenderFxNone;
 			pev->renderamt = 0;
 		}
