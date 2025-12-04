@@ -256,13 +256,8 @@ LINK_ENTITY_TO_CLASS( weapon_crossbow, CCrossbow )
 
 void CCrossbow::Spawn()
 {
-	Precache();
-	m_iId = WEAPON_CROSSBOW;
-	SET_MODEL( ENT( pev ), "models/w_crossbow.mdl" );
-
-	m_iDefaultAmmo = CROSSBOW_DEFAULT_GIVE;
-
-	FallInit();// get ready to fall down.
+	// Weapon disabled: immediately remove the entity so it cannot be used.
+	UTIL_Remove( this );
 }
 
 int CCrossbow::AddToPlayer( CBasePlayer *pPlayer )
@@ -532,15 +527,13 @@ void CCrossbow::WeaponIdle( void )
 class CCrossbowAmmo : public CBasePlayerAmmo
 {
 	void Spawn( void )
-	{ 
-		Precache();
-		SET_MODEL( ENT( pev ), "models/w_crossbow_clip.mdl" );
-		CBasePlayerAmmo::Spawn();
+	{
+		// Ammo pickup disabled: remove the entity immediately so it never appears or gives ammo.
+		UTIL_Remove( this );
 	}
 	void Precache( void )
 	{
-		PRECACHE_MODEL( "models/w_crossbow_clip.mdl" );
-		PRECACHE_SOUND( "items/9mmclip1.wav" );
+		// No-op: crossbow ammo is fully disabled.
 	}
 	BOOL AddAmmo( CBaseEntity *pOther )
 	{ 

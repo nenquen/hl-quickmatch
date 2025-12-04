@@ -246,13 +246,8 @@ int CSatchel::AddToPlayer( CBasePlayer *pPlayer )
 
 void CSatchel::Spawn()
 {
-	Precache();
-	m_iId = WEAPON_SATCHEL;
-	SET_MODEL( ENT( pev ), "models/w_satchel.mdl" );
-
-	m_iDefaultAmmo = SATCHEL_DEFAULT_GIVE;
-		
-	FallInit();// get ready to fall down.
+	// Weapon disabled: immediately remove the entity so it cannot be used.
+	UTIL_Remove( this );
 }
 
 void CSatchel::Precache( void )

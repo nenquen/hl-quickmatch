@@ -374,32 +374,8 @@ LINK_ENTITY_TO_CLASS( weapon_tripmine, CTripmine )
 
 void CTripmine::Spawn()
 {
-	Precache();
-	m_iId = WEAPON_TRIPMINE;
-	SET_MODEL( ENT( pev ), "models/v_tripmine.mdl" );
-	pev->frame = 0;
-
-#ifdef CLIENT_DLL
-	pev->body = 0;
-#else
-	pev->body = 3;
-#endif
-	pev->sequence = TRIPMINE_GROUND;
-	// ResetSequenceInfo();
-	pev->framerate = 0;
-
-	FallInit();// get ready to fall down
-
-	m_iDefaultAmmo = TRIPMINE_DEFAULT_GIVE;
-
-#if CLIENT_DLL
-	if( !bIsMultiplayer() )
-#else
-	if( !g_pGameRules->IsDeathmatch() )
-#endif
-	{
-		UTIL_SetSize( pev, Vector( -16.0f, -16.0f, 0.0f ), Vector( 16.0f, 16.0f, 28.0f ) ); 
-	}
+	// Weapon disabled: immediately remove the entity so it cannot be used.
+	UTIL_Remove( this );
 }
 
 void CTripmine::Precache( void )

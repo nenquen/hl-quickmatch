@@ -32,18 +32,12 @@ float AmmoDamage( const char *pName )
 		return gSkillData.plrDmgM203Grenade;
 	if( !strcmp( pName, "buckshot" ) )
 		return gSkillData.plrDmgBuckshot;
-	if( !strcmp( pName, "bolts") )
-		return gSkillData.plrDmgCrossbowMonster;
 	if( !strcmp( pName, "rockets") )
 		return gSkillData.plrDmgRPG;
 	if( !strcmp( pName, "uranium") )
 		return gSkillData.plrDmgGauss;
 	if( !strcmp( pName, "Hand Grenade") )
 		return gSkillData.plrDmgHandGrenade;
-	if( !strcmp( pName, "Satchel Charge") )
-		return gSkillData.plrDmgSatchel;
-	if( !strcmp( pName, "Trip Mine") )
-		return gSkillData.plrDmgTripmine;
 
 	return 0;
 }

@@ -334,10 +334,6 @@ void W_Precache( void )
 	UTIL_PrecacheOtherWeapon( "weapon_rpg" );
 	UTIL_PrecacheOther( "ammo_rpgclip" );
 
-	// crossbow
-	UTIL_PrecacheOtherWeapon( "weapon_crossbow" );
-	UTIL_PrecacheOther( "ammo_crossbow" );
-
 	// awp sniper rifle
 	UTIL_PrecacheOtherWeapon( "weapon_awp" );
 	UTIL_PrecacheOther( "ammo_awp" );
@@ -345,21 +341,10 @@ void W_Precache( void )
 	// egon
 	UTIL_PrecacheOtherWeapon( "weapon_egon" );
 #endif
-	// tripmine
-	UTIL_PrecacheOtherWeapon( "weapon_tripmine" );
-#if !OEM_BUILD && !HLDEMO_BUILD
-	// satchel charge
-	UTIL_PrecacheOtherWeapon( "weapon_satchel" );
-#endif
+	// tripmine, satchel: disabled weapons, do not precache or register
 	// hand grenade
 	UTIL_PrecacheOtherWeapon("weapon_handgrenade");
 #if !OEM_BUILD && !HLDEMO_BUILD
-	// squeak grenade
-	UTIL_PrecacheOtherWeapon( "weapon_snark" );
-
-	// hornetgun
-	UTIL_PrecacheOtherWeapon( "weapon_hornetgun" );
-
 	if( g_pGameRules->IsDeathmatch() )
 	{
 		UTIL_PrecacheOther( "weaponbox" );// container for dropped deathmatch weapons

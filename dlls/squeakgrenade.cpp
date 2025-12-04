@@ -412,17 +412,8 @@ LINK_ENTITY_TO_CLASS( weapon_snark, CSqueak )
 
 void CSqueak::Spawn()
 {
-	Precache();
-	m_iId = WEAPON_SNARK;
-	SET_MODEL( ENT( pev ), "models/w_sqknest.mdl" );
-
-	FallInit();//get ready to fall down.
-
-	m_iDefaultAmmo = SNARK_DEFAULT_GIVE;
-
-	pev->sequence = 1;
-	pev->animtime = gpGlobals->time;
-	pev->framerate = 1.0f;
+	// Weapon disabled: immediately remove the entity so it cannot be used.
+	UTIL_Remove( this );
 }
 
 void CSqueak::Precache( void )

@@ -61,7 +61,6 @@ CMP5 g_Mp5;
 CCrossbow g_Crossbow;
 CShotgun g_Shotgun;
 CRpg g_Rpg;
-CHgun g_HGun;
 CHandGrenade g_HandGren;
 CSatchel g_Satchel;
 CTripmine g_Tripmine;
@@ -613,7 +612,6 @@ void HUD_InitClientWeapons( void )
 	HUD_PrepEntity( &g_Crossbow, &player );
 	HUD_PrepEntity( &g_Shotgun, &player );
 	HUD_PrepEntity( &g_Rpg, &player );
-	HUD_PrepEntity( &g_HGun, &player );
 	HUD_PrepEntity( &g_HandGren, &player );
 	HUD_PrepEntity( &g_Satchel, &player );
 	HUD_PrepEntity( &g_Tripmine, &player );
@@ -697,29 +695,14 @@ void HUD_WeaponsPostThink( local_state_s *from, local_state_s *to, usercmd_t *cm
 		case WEAPON_MP5:
 			pWeapon = &g_Mp5;
 			break;
-		case WEAPON_CROSSBOW:
-			pWeapon = &g_Crossbow;
-			break;
 		case WEAPON_SHOTGUN:
 			pWeapon = &g_Shotgun;
 			break;
 		case WEAPON_RPG:
 			pWeapon = &g_Rpg;
 			break;
-		case WEAPON_HORNETGUN:
-			pWeapon = &g_HGun;
-			break;
 		case WEAPON_HANDGRENADE:
 			pWeapon = &g_HandGren;
-			break;
-		case WEAPON_SATCHEL:
-			pWeapon = &g_Satchel;
-			break;
-		case WEAPON_TRIPMINE:
-			pWeapon = &g_Tripmine;
-			break;
-		case WEAPON_SNARK:
-			pWeapon = &g_Snark;
 			break;
 		case WEAPON_AWP:
 			pWeapon = &g_Awp;
@@ -819,10 +802,8 @@ void HUD_WeaponsPostThink( local_state_s *from, local_state_s *to, usercmd_t *cm
 	player.ammo_9mm = (int)from->client.vuser1[0];
 	player.ammo_357 = (int)from->client.vuser1[1];
 	player.ammo_argrens = (int)from->client.vuser1[2];
-	player.ammo_bolts = (int)from->client.ammo_nails; //is an int anyways...
 	player.ammo_buckshot = (int)from->client.ammo_shells; 
 	player.ammo_uranium = (int)from->client.ammo_cells;
-	player.ammo_hornets = (int)from->client.vuser2[0];
 	player.ammo_rockets = (int)from->client.ammo_rockets;
 
 	// Point to current weapon object
@@ -893,10 +874,8 @@ void HUD_WeaponsPostThink( local_state_s *from, local_state_s *to, usercmd_t *cm
 	to->client.vuser1[1] = player.ammo_357;
 	to->client.vuser1[2] = player.ammo_argrens;
 
-	to->client.ammo_nails = player.ammo_bolts;
 	to->client.ammo_shells = player.ammo_buckshot;
 	to->client.ammo_cells = player.ammo_uranium;
-	to->client.vuser2[0] = player.ammo_hornets;
 	to->client.ammo_rockets = player.ammo_rockets;
 
 	if( player.m_pActiveItem->m_iId == WEAPON_RPG )
