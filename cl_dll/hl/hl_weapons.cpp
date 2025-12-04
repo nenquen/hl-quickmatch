@@ -664,6 +664,9 @@ HUD_WeaponsPostThink
 Run Weapon firing code on client
 =====================
 */
+// Exposed to HUD code to drive AUX Power bar based on real server-side sprint aux.
+float g_flClientSprintAuxPower = 1.0f;
+
 void HUD_WeaponsPostThink( local_state_s *from, local_state_s *to, usercmd_t *cmd, double time, unsigned int random_seed )
 {
 	int i;
@@ -732,6 +735,9 @@ void HUD_WeaponsPostThink( local_state_s *from, local_state_s *to, usercmd_t *cm
 	// If so, run the appropriate player killed or spawn function
 	if( g_runfuncs )
 	{
+		// Cache sprint aux power from the server for HUD rendering.
+		g_flClientSprintAuxPower = from->client.fuser1;
+
 		if( to->client.health <= 0 && lasthealth > 0 )
 		{
 			player.Killed( NULL, 0 );

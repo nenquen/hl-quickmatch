@@ -940,6 +940,8 @@ void ClientPrecache( void )
 	PRECACHE_SOUND( "player/pl_pain6.wav" );
 	PRECACHE_SOUND( "player/pl_pain7.wav" );
 	PRECACHE_SOUND( "player/whistle.wav" );
+	PRECACHE_SOUND( "player/sprint_start.wav" );
+	PRECACHE_SOUND( "player/sprint_warning.wav" );
 
 	PRECACHE_MODEL( "models/player.mdl" );
 
@@ -1795,6 +1797,7 @@ void UpdateClientData( const struct edict_s *ent, int sendweapons, struct client
 		if( pl )
 		{
 			cd->m_flNextAttack = pl->m_flNextAttack;
+			cd->fuser1 = pl->m_flSprintAuxPower;
 			cd->fuser2 = pl->m_flNextAmmoBurn;
 			cd->fuser3 = pl->m_flAmmoStartCharge;
 			cd->vuser1.x = pl->ammo_9mm;

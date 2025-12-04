@@ -1111,8 +1111,48 @@ void PM_WalkMove( void )
 	VectorCopy( wishvel, wishdir );   // Determine maginitude of speed of move
 	wishspeed = VectorNormalize( wishdir );
 
-	// Apply sprint multiplier when the player is holding the sprint key (IN_RUN)
-	if( pmove->cmd.buttons & IN_RUN )
+	// Local sprint aux power (client movement side), mirrors server-side behavior.
+	// Drains in ~4 seconds of continuous sprint and regenerates in ~4 seconds when not sprinting.
+	static float s_flSprintAuxPower = 1.0f;
+	static int   s_bSprintLocked = 0;
+	const float flSprintDrainTime = 4.0f;
+	const float flDelta = pmove->frametime;
+	const float flRate = ( flSprintDrainTime > 0.0f ) ? ( flDelta / flSprintDrainTime ) : 0.0f;
+
+	qboolean bWantsSprint = ( pmove->cmd.buttons & IN_RUN ) ? 1 : 0;
+	qboolean bHasAuxEnergy = ( s_flSprintAuxPower > 0.0f ) ? 1 : 0;
+	qboolean bCanSprintNow = ( !s_bSprintLocked && bWantsSprint && bHasAuxEnergy );
+
+	if( bCanSprintNow && s_flSprintAuxPower > 0.0f )
+	{
+		s_flSprintAuxPower -= flRate;
+		if( s_flSprintAuxPower < 0.0f )
+			s_flSprintAuxPower = 0.0f;
+	}
+	else
+	{
+		// Only regenerate aux when the sprint key is not held; if the player keeps holding sprint
+		// after aux is empty, it will stay at zero until they release the key.
+		if( !bWantsSprint )
+		{
+			s_flSprintAuxPower += flRate;
+			if( s_flSprintAuxPower > 1.0f )
+				s_flSprintAuxPower = 1.0f;
+		}
+	}
+
+	// Lock/unlock sprint based on aux level, mirroring server-side behavior.
+	if( s_flSprintAuxPower <= 0.0f )
+	{
+		s_bSprintLocked = 1;
+	}
+	else if( !bWantsSprint && s_flSprintAuxPower > 0.0f )
+	{
+		s_bSprintLocked = 0;
+	}
+
+	// Apply sprint multiplier only while sprint is truly active.
+	if( bCanSprintNow )
 	{
 		wishspeed *= 1.4f;
 	}
@@ -1122,7 +1162,7 @@ void PM_WalkMove( void )
 	//
 	{
 		float flMaxSpeed = pmove->maxspeed;
-		if( pmove->cmd.buttons & IN_RUN )
+		if( bCanSprintNow )
 		{
 			flMaxSpeed *= 1.4f;
 		}

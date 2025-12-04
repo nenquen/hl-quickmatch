@@ -203,13 +203,9 @@ void CAwp::Reload( void )
 		SecondaryAttack(); // leave zoom when reloading
 	}
 
-	// Explicitly send reload anim before starting the reload sequence
+	// Explicitly send reload anim before starting the reload sequence, but do not play any extra reload sound.
 	SendWeaponAnim( AWP_RELOAD );
-	if( DefaultReload( AWP_MAX_CLIP, AWP_RELOAD, 2.8f ) )
-	{
-		// reuse 357 reload sound
-		EMIT_SOUND_DYN( ENT( m_pPlayer->pev ), CHAN_ITEM, "weapons/357_reload1.wav", RANDOM_FLOAT( 0.95f, 1.0f ), ATTN_NORM, 0, 93 + RANDOM_LONG( 0, 0xF ) );
-	}
+	DefaultReload( AWP_MAX_CLIP, AWP_RELOAD, 2.8f );
 }
 
 void CAwp::WeaponIdle( void )

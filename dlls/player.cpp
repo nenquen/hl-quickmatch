@@ -1884,6 +1884,60 @@ void CBasePlayer::PreThink( void )
 	m_afButtonPressed =  buttonsChanged & pev->button;		// The changed ones still down are "pressed"
 	m_afButtonReleased = buttonsChanged & ( ~pev->button );	// The ones not down are "released"
 
+	// Sprint aux power configuration.
+	// Full aux drains in ~4 seconds of continuous sprint and regenerates in ~4 seconds when not sprinting.
+	const float flSprintDrainTime = 4.0f;
+	const float flDelta = gpGlobals->frametime;
+	const float flRate = ( flSprintDrainTime > 0.0f ) ? ( flDelta / flSprintDrainTime ) : 0.0f;
+
+	float flPrevAux = m_flSprintAuxPower;
+
+	bool bWantsSprint = ( pev->button & IN_RUN ) != 0;
+	bool bHasAuxEnergy = ( m_flSprintAuxPower > 0.0f );
+	bool bCanSprintNow = !m_bSprintLocked && bWantsSprint && bHasAuxEnergy;
+
+	// Play a one-shot sprint start sound only when we actually begin sprinting with some aux and not locked.
+	if( ( m_afButtonPressed & IN_RUN ) && !m_bSprintLocked && bHasAuxEnergy )
+	{
+		EMIT_SOUND( ENT( pev ), CHAN_ITEM, "player/sprint_start.wav", 1.0f, ATTN_NORM );
+	}
+
+	// Drain aux only while sprinting is truly active; otherwise regenerate.
+	if( bCanSprintNow && m_flSprintAuxPower > 0.0f )
+	{
+		m_flSprintAuxPower -= flRate;
+		if( m_flSprintAuxPower < 0.0f )
+			m_flSprintAuxPower = 0.0f;
+	}
+	else
+	{
+		// Only regenerate aux when the sprint key is not held; if the player keeps holding sprint
+		// after aux is empty, it will stay at zero until they release the key.
+		if( !bWantsSprint )
+		{
+			m_flSprintAuxPower += flRate;
+			if( m_flSprintAuxPower > 1.0f )
+				m_flSprintAuxPower = 1.0f;
+		}
+	}
+
+	// When aux just reached empty from a non-empty value, lock sprint and play a warning beep once.
+	if( flPrevAux > 0.0f && m_flSprintAuxPower <= 0.0f )
+	{
+		if( !m_bSprintAuxWasEmpty )
+		{
+			EMIT_SOUND( ENT( pev ), CHAN_ITEM, "player/sprint_warning.wav", 1.0f, ATTN_NORM );
+		}
+		m_bSprintAuxWasEmpty = true;
+		m_bSprintLocked = true;
+	}
+	else if( !bWantsSprint && m_flSprintAuxPower > 0.0f )
+	{
+		// Once we've regenerated enough aux, allow sprint (and the warning) again.
+		m_bSprintAuxWasEmpty = false;
+		m_bSprintLocked = false;
+	}
+
 	g_pGameRules->PlayerThink( this );
 
 	if( g_fGameOver )
@@ -2974,6 +3028,11 @@ void CBasePlayer::Spawn( void )
 
 	// dont let uninitialized value here hurt the player
 	m_flFallVelocity = 0;
+
+	// Initialize sprint auxiliary power (stamina) to full.
+	m_flSprintAuxPower = 1.0f;
+	m_bSprintAuxWasEmpty = false;
+	m_bSprintLocked = false;
 
 	g_pGameRules->SetDefaultPlayerTeam( this );
 	g_pGameRules->GetPlayerSpawnSpot( this );

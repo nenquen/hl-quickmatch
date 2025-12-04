@@ -45,8 +45,17 @@ inline float CVAR_GET_FLOAT( const char *x ) {	return gEngfuncs.pfnGetCvarFloat(
 inline char* CVAR_GET_STRING( const char *x ) {	return gEngfuncs.pfnGetCvarString( (char*)x ); }
 inline struct cvar_s *CVAR_CREATE( const char *cv, const char *val, const int flags ) {	return gEngfuncs.pfnRegisterVariable( (char*)cv, (char*)val, flags ); }
 
-#define SPR_Load ( *gEngfuncs.pfnSPR_Load )
-#define SPR_Set ( *gEngfuncs.pfnSPR_Set )
+#define SPR_Load   ( *gEngfuncs.pfnSPR_Load )
+
+// Force all sprites to render as white on the HUD, regardless of the
+// requested color. Keep the same call site signature but override the
+// actual RGB passed to the engine.
+inline void HUD_SPR_Set( HSPRITE sprite, int /*r*/, int /*g*/, int /*b*/ )
+{
+	(*gEngfuncs.pfnSPR_Set)( sprite, 255, 255, 255 );
+}
+
+#define SPR_Set    HUD_SPR_Set
 #define SPR_Frames ( *gEngfuncs.pfnSPR_Frames )
 #define SPR_GetList ( *gEngfuncs.pfnSPR_GetList )
 

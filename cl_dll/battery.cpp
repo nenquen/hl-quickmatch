@@ -75,14 +75,15 @@ int CHudBattery::Draw( float flTime )
 		return 1;
 
 	int r, g, b, x, y, a;
-	wrect_t rc;
 
-	rc = *m_prc2;
-	rc.top  += m_iHeight * ( (float)( 100 - ( Q_min( 100, m_iBat ) ) ) * 0.01f );	// battery can go from 0 to 100 so * 0.01 goes from 0 to 1
-
-	UnpackRGB( r, g, b, RGB_YELLOWISH );
+	// Always render armor HUD text in white.
+	r = g = b = 255;
 
 	if( !( gHUD.m_iWeaponBits & ( 1 << ( WEAPON_SUIT ) ) ) )
+		return 1;
+
+	// Do not show armor HUD if we have no armor yet.
+	if( m_iBat <= 0 )
 		return 1;
 
 	// Has health changed? Flash the health #
@@ -106,32 +107,18 @@ int CHudBattery::Draw( float flTime )
 
 	ScaleColors( r, g, b, a );
 
-	int iOffset = ( m_prc1->bottom - m_prc1->top ) / 6;
+	// Place armor HUD above health HUD, sharing the same base X position.
+	int baseX = XRES( 20 );
+	int healthY = ScreenHeight - gHUD.m_iFontHeight - gHUD.m_iFontHeight / 2;
+	int armorY = healthY - ( gHUD.m_iFontHeight * 2 );
+	int labelY = armorY - gHUD.m_iFontHeight;
 
-	y = ScreenHeight - gHUD.m_iFontHeight - gHUD.m_iFontHeight / 2;
+	// Draw "AP" label.
+	gHUD.DrawHudString( baseX, labelY, ScreenWidth, "AP", r, g, b );
 
-	if( gHUD.IsHL25( )) // a1ba: HL25 style
-		x = ( m_prc1->right - m_prc1->left ) * 3;
-	else
-		x = ScreenWidth / 5;
-
-	// make sure we have the right sprite handles
-	if( !m_hSprite1 )
-		m_hSprite1 = gHUD.GetSprite( gHUD.GetSpriteIndex( "suit_empty" ) );
-	if( !m_hSprite2 )
-		m_hSprite2 = gHUD.GetSprite( gHUD.GetSpriteIndex( "suit_full" ) );
-
-	SPR_Set( m_hSprite1, r, g, b );
-	SPR_DrawAdditive( 0,  x, y - iOffset, m_prc1 );
-
-	if( rc.bottom > rc.top )
-	{
-		SPR_Set( m_hSprite2, r, g, b );
-		SPR_DrawAdditive( 0, x, y - iOffset + ( rc.top - m_prc2->top ), &rc );
-	}
-
-	x += ( m_prc1->right - m_prc1->left );
-	x = gHUD.DrawHudNumber( x, y + gHUD.m_iHudNumbersYOffset, DHN_3DIGITS | DHN_DRAWZERO, m_iBat, r, g, b );
+	// Draw armor number.
+	x = baseX;
+	x = gHUD.DrawHudNumber( x, armorY + gHUD.m_iHudNumbersYOffset, DHN_3DIGITS | DHN_DRAWZERO, m_iBat, r, g, b );
 
 	return 1;
 }

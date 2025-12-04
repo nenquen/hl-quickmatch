@@ -177,6 +177,9 @@ void CHudHealth::GetPainColor( int &r, int &g, int &b )
 #endif
 }
 
+// Server-synchronized sprint aux power for HUD (0.0 empty .. 1.0 full).
+extern float g_flClientSprintAuxPower;
+
 int CHudHealth::Draw( float flTime )
 {
 	int r, g, b;
@@ -205,35 +208,48 @@ int CHudHealth::Draw( float flTime )
 	else
 		a = MIN_ALPHA;
 
-	// If health is getting low, make it bright red
-	if( m_iHealth <= 15 )
-		a = 255;
-
-	GetPainColor( r, g, b );
+	// Always render health HUD text in white.
+	r = g = b = 255;
 	ScaleColors( r, g, b, a );
 
 	// Only draw health if we have the suit.
 	if( gHUD.m_iWeaponBits & ( 1 << ( WEAPON_SUIT ) ) )
 	{
+		// Base position shared with armor HUD so they align nicely.
 		HealthWidth = gHUD.GetSpriteRect( gHUD.m_HUD_number_0 ).right - gHUD.GetSpriteRect( gHUD.m_HUD_number_0 ).left;
-		int CrossWidth = gHUD.GetSpriteRect( m_HUD_cross ).right - gHUD.GetSpriteRect( m_HUD_cross ).left;
 
+		// Health number on the bottom, label directly above it.
 		y = ScreenHeight - gHUD.m_iFontHeight - gHUD.m_iFontHeight / 2;
-		x = CrossWidth / 2;
+		int labelY = y - gHUD.m_iFontHeight;
+		int baseX = XRES( 20 );
 
-		SPR_Set( gHUD.GetSprite( m_HUD_cross ), r, g, b );
-		SPR_DrawAdditive( 0, x, y, &gHUD.GetSpriteRect( m_HUD_cross ) );
+		// Draw "HP" label.
+		gHUD.DrawHudString( baseX, labelY, ScreenWidth, "HP", r, g, b );
 
-		x = CrossWidth + HealthWidth / 2;
-
+		// Draw health number.
+		x = baseX;
 		x = gHUD.DrawHudNumber( x, y + gHUD.m_iHudNumbersYOffset, DHN_3DIGITS | DHN_DRAWZERO, m_iHealth, r, g, b );
 
-		x += HealthWidth / 2;
+		int auxLabelX = baseX + XRES( 70 );
+		int auxLabelY = labelY;
+		gHUD.DrawHudString( auxLabelX, auxLabelY, ScreenWidth, "AUX Power", r, g, b );
 
-		int iHeight = gHUD.m_iFontHeight;
-		int iWidth = HealthWidth / 10;
-		UnpackRGB( r, g, b, RGB_YELLOWISH );
-		FillRGBA( x, y + gHUD.m_iHudNumbersYOffset, iWidth, iHeight, r, g, b, a );
+		int barWidth = XRES( 48 );
+		int barHeight = gHUD.m_iFontHeight / 2;
+		int barX = auxLabelX;
+		int barY = y + gHUD.m_iHudNumbersYOffset;
+
+		FillRGBA( barX, barY, barWidth, barHeight, 0, 0, 0, a );
+		// Clamp to [0,1] to be safe in case of minor desync.
+		float flAux = g_flClientSprintAuxPower;
+		if( flAux < 0.0f ) flAux = 0.0f;
+		if( flAux > 1.0f ) flAux = 1.0f;
+		int filledWidth = (int)( barWidth * flAux );
+		if( filledWidth > 0 )
+		{
+			FillRGBA( barX, barY, filledWidth, barHeight, 255, 255, 255, a );
+		}
+
 	}
 
 	DrawDamage( flTime );
