@@ -111,6 +111,10 @@ playermove_t *pmove = NULL;
 static vec3_t rgv3tStuckTable[54];
 static int rgStuckLast[MAX_CLIENTS][2];
 
+// Per-player sprint aux state (server + client prediction share this via pmove->player_index).
+static float g_rgflSprintAuxPower[MAX_CLIENTS];
+static int   g_rgbSprintLocked[MAX_CLIENTS];
+
 // Texture names
 static int gcTextures = 0;
 static char grgszTextureName[CTEXTURESMAX][CBTEXTURENAMEMAX];	
@@ -1113,21 +1117,27 @@ void PM_WalkMove( void )
 
 	// Local sprint aux power (client movement side), mirrors server-side behavior.
 	// Drains in ~4 seconds of continuous sprint and regenerates in ~4 seconds when not sprinting.
-	static float s_flSprintAuxPower = 1.0f;
-	static int   s_bSprintLocked = 0;
+	int idx = pmove->player_index;
+	if( idx < 1 ) idx = 1;
+	if( idx > MAX_CLIENTS ) idx = MAX_CLIENTS;
+	int iAux = idx - 1;
+
+	float *pAuxPower = &g_rgflSprintAuxPower[iAux];
+	int   *pLocked   = &g_rgbSprintLocked[iAux];
+
 	const float flSprintDrainTime = 4.0f;
 	const float flDelta = pmove->frametime;
 	const float flRate = ( flSprintDrainTime > 0.0f ) ? ( flDelta / flSprintDrainTime ) : 0.0f;
 
 	qboolean bWantsSprint = ( pmove->cmd.buttons & IN_RUN ) ? 1 : 0;
-	qboolean bHasAuxEnergy = ( s_flSprintAuxPower > 0.0f ) ? 1 : 0;
-	qboolean bCanSprintNow = ( !s_bSprintLocked && bWantsSprint && bHasAuxEnergy );
+	qboolean bHasAuxEnergy = ( *pAuxPower > 0.0f ) ? 1 : 0;
+	qboolean bCanSprintNow = ( !(*pLocked) && bWantsSprint && bHasAuxEnergy );
 
-	if( bCanSprintNow && s_flSprintAuxPower > 0.0f )
+	if( bCanSprintNow && *pAuxPower > 0.0f )
 	{
-		s_flSprintAuxPower -= flRate;
-		if( s_flSprintAuxPower < 0.0f )
-			s_flSprintAuxPower = 0.0f;
+		*pAuxPower -= flRate;
+		if( *pAuxPower < 0.0f )
+			*pAuxPower = 0.0f;
 	}
 	else
 	{
@@ -1135,20 +1145,20 @@ void PM_WalkMove( void )
 		// after aux is empty, it will stay at zero until they release the key.
 		if( !bWantsSprint )
 		{
-			s_flSprintAuxPower += flRate;
-			if( s_flSprintAuxPower > 1.0f )
-				s_flSprintAuxPower = 1.0f;
+			*pAuxPower += flRate;
+			if( *pAuxPower > 1.0f )
+				*pAuxPower = 1.0f;
 		}
 	}
 
 	// Lock/unlock sprint based on aux level, mirroring server-side behavior.
-	if( s_flSprintAuxPower <= 0.0f )
+	if( *pAuxPower <= 0.0f )
 	{
-		s_bSprintLocked = 1;
+		*pLocked = 1;
 	}
-	else if( !bWantsSprint && s_flSprintAuxPower > 0.0f )
+	else if( !bWantsSprint && *pAuxPower > 0.0f )
 	{
-		s_bSprintLocked = 0;
+		*pLocked = 0;
 	}
 
 	// Apply sprint multiplier only while sprint is truly active.
