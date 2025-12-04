@@ -177,9 +177,6 @@ void CHudHealth::GetPainColor( int &r, int &g, int &b )
 #endif
 }
 
-// Server-synchronized sprint aux power for HUD (0.0 empty .. 1.0 full).
-extern float g_flClientSprintAuxPower;
-
 int CHudHealth::Draw( float flTime )
 {
 	int r, g, b;
@@ -229,73 +226,6 @@ int CHudHealth::Draw( float flTime )
 		// Draw health number.
 		x = baseX;
 		x = gHUD.DrawHudNumber( x, y + gHUD.m_iHudNumbersYOffset, DHN_3DIGITS | DHN_DRAWZERO, m_iHealth, r, g, b );
-
-		// AUX Power HUD: fade in when aux < 1.0 and stay visible until aux is fully refilled,
-		// then fade out and disappear.
-		static float s_flAuxHudAlpha = 0.0f;   // current alpha for AUX bar [0..255]
-		static bool  s_bAuxVisible  = false;   // whether AUX HUD is currently considered visible
-		static bool  s_bAuxFadingOut = false;  // are we in fade-out phase
-
-		// Clamp to [0,1] to be safe in case of minor desync.
-		float flAux = g_flClientSprintAuxPower;
-		if( flAux < 0.0f ) flAux = 0.0f;
-		if( flAux > 1.0f ) flAux = 1.0f;
-
-		// Determine visibility and alpha animation state.
-		const float flFadeSpeedIn  = 400.0f; // alpha units per second for fade in
-		const float flFadeSpeedOut = 400.0f; // alpha units per second for fade out
-		const float flFrameDelta   = (float)gHUD.m_flTimeDelta;
-
-		if( flAux < 0.999f )
-		{
-			// Aux is not full: ensure AUX HUD is visible and fading in.
-			s_bAuxVisible = true;
-			s_bAuxFadingOut = false;
-			s_flAuxHudAlpha += flFadeSpeedIn * flFrameDelta;
-			if( s_flAuxHudAlpha > 255.0f )
-				s_flAuxHudAlpha = 255.0f;
-		}
-		else
-		{
-			// Aux is full: if it was visible, start or continue fade out.
-			if( s_bAuxVisible )
-			{
-				s_bAuxFadingOut = true;
-			}
-		}
-
-		if( s_bAuxFadingOut )
-		{
-			s_flAuxHudAlpha -= flFadeSpeedOut * flFrameDelta;
-			if( s_flAuxHudAlpha <= 0.0f )
-			{
-				s_flAuxHudAlpha = 0.0f;
-				s_bAuxVisible = false;
-				s_bAuxFadingOut = false;
-			}
-		}
-
-		if( s_bAuxVisible && s_flAuxHudAlpha > 0.0f )
-		{
-			int auxLabelX = baseX + XRES( 70 );
-			int auxLabelY = labelY;
-			int auxA = (int)Q_min( s_flAuxHudAlpha, (float)a );
-			int auxR = 255, auxG = 255, auxB = 255;
-			ScaleColors( auxR, auxG, auxB, auxA );
-			gHUD.DrawHudString( auxLabelX, auxLabelY, ScreenWidth, "AUX Power", auxR, auxG, auxB );
-
-			int barWidth = XRES( 48 );
-			int barHeight = gHUD.m_iFontHeight / 2;
-			int barX = auxLabelX;
-			int barY = y + gHUD.m_iHudNumbersYOffset;
-
-			FillRGBA( barX, barY, barWidth, barHeight, 0, 0, 0, auxA );
-			int filledWidth = (int)( barWidth * flAux );
-			if( filledWidth > 0 )
-			{
-				FillRGBA( barX, barY, filledWidth, barHeight, 255, 255, 255, auxA );
-			}
-		}
 
 	}
 

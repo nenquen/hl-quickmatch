@@ -136,9 +136,6 @@ public:
 	float				m_flSwimTime;		// how long player has been underwater
 	float				m_flDuckTime;		// how long we've been ducking
 	float				m_flWallJumpTime;	// how long until next walljump
-	float				m_flSprintAuxPower; // sprint "aux power" from 0.0 (empty) to 1.0 (full)
-	bool				m_bSprintAuxWasEmpty; // tracks previous empty state to gate warning sound
-	bool				m_bSprintLocked; // when true, sprint is disabled until aux has regenerated above threshold
 
 	float				m_flSuitUpdate;					// when to play next suit update
 	int					m_rgSuitPlayList[CSUITPLAYLIST];// next sentencenum to play for suit update

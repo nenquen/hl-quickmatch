@@ -111,10 +111,6 @@ playermove_t *pmove = NULL;
 static vec3_t rgv3tStuckTable[54];
 static int rgStuckLast[MAX_CLIENTS][2];
 
-// Per-player sprint aux state (server + client prediction share this via pmove->player_index).
-static float g_rgflSprintAuxPower[MAX_CLIENTS];
-static int   g_rgbSprintLocked[MAX_CLIENTS];
-
 // Texture names
 static int gcTextures = 0;
 static char grgszTextureName[CTEXTURESMAX][CBTEXTURENAMEMAX];	
@@ -1112,57 +1108,12 @@ void PM_WalkMove( void )
 
 	wishvel[2] = 0;             // Zero out z part of velocity
 
-	VectorCopy( wishvel, wishdir );   // Determine maginitude of speed of move
+ 	VectorCopy( wishvel, wishdir );   // Determine maginitude of speed of move
 	wishspeed = VectorNormalize( wishdir );
 
-	// Local sprint aux power (client movement side), mirrors server-side behavior.
-	// Drains in ~4 seconds of continuous sprint and regenerates in ~4 seconds when not sprinting.
-	int idx = pmove->player_index;
-	if( idx < 1 ) idx = 1;
-	if( idx > MAX_CLIENTS ) idx = MAX_CLIENTS;
-	int iAux = idx - 1;
-
-	float *pAuxPower = &g_rgflSprintAuxPower[iAux];
-	int   *pLocked   = &g_rgbSprintLocked[iAux];
-
-	const float flSprintDrainTime = 4.0f;
-	const float flDelta = pmove->frametime;
-	const float flRate = ( flSprintDrainTime > 0.0f ) ? ( flDelta / flSprintDrainTime ) : 0.0f;
-
-	qboolean bWantsSprint = ( pmove->cmd.buttons & IN_RUN ) ? 1 : 0;
-	qboolean bHasAuxEnergy = ( *pAuxPower > 0.0f ) ? 1 : 0;
-	qboolean bCanSprintNow = ( !(*pLocked) && bWantsSprint && bHasAuxEnergy );
-
-	if( bCanSprintNow && *pAuxPower > 0.0f )
-	{
-		*pAuxPower -= flRate;
-		if( *pAuxPower < 0.0f )
-			*pAuxPower = 0.0f;
-	}
-	else
-	{
-		// Only regenerate aux when the sprint key is not held; if the player keeps holding sprint
-		// after aux is empty, it will stay at zero until they release the key.
-		if( !bWantsSprint )
-		{
-			*pAuxPower += flRate;
-			if( *pAuxPower > 1.0f )
-				*pAuxPower = 1.0f;
-		}
-	}
-
-	// Lock/unlock sprint based on aux level, mirroring server-side behavior.
-	if( *pAuxPower <= 0.0f )
-	{
-		*pLocked = 1;
-	}
-	else if( !bWantsSprint && *pAuxPower > 0.0f )
-	{
-		*pLocked = 0;
-	}
-
-	// Apply sprint multiplier only while sprint is truly active.
-	if( bCanSprintNow )
+	// Sprint: simply apply a speed multiplier whenever the run key is held.
+	qboolean bSprint = ( pmove->cmd.buttons & IN_RUN ) ? 1 : 0;
+	if( bSprint )
 	{
 		wishspeed *= 1.4f;
 	}
@@ -1172,7 +1123,7 @@ void PM_WalkMove( void )
 	//
 	{
 		float flMaxSpeed = pmove->maxspeed;
-		if( bCanSprintNow )
+		if( bSprint )
 		{
 			flMaxSpeed *= 1.4f;
 		}
