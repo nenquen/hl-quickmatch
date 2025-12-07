@@ -147,14 +147,6 @@ void CAwp::PrimaryAttack( void )
 	m_pPlayer->pev->punchangle.x -= flRecoil;
 	m_pPlayer->pev->punchangle.y += RANDOM_FLOAT( -1.0f, 1.0f );
 
-	// Leave a bullet decal on the surface we hit
-	TraceResult tr;
-	UTIL_TraceLine( vecSrc, vecSrc + vecDir * 8192, dont_ignore_monsters, m_pPlayer->edict(), &tr );
-	if( tr.flFraction < 1.0f )
-	{
-		DecalGunshot( &tr, BULLET_PLAYER_357 );
-	}
-
 	// After firing, always reset zoom/FOV so the player must re-toggle scope manually
 	if( m_pPlayer->pev->fov != 0 )
 	{
