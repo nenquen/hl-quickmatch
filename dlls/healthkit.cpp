@@ -23,6 +23,7 @@
 #include "items.h"
 #include "gamerules.h"
 #include "game.h"
+#include "shake.h"
 
 extern int gmsgItemPickup;
 
@@ -75,6 +76,9 @@ BOOL CHealthKit::MyTouch( CBasePlayer *pPlayer )
 		MESSAGE_BEGIN( MSG_ONE, gmsgItemPickup, NULL, pPlayer->pev );
 			WRITE_STRING( STRING( pev->classname ) );
 		MESSAGE_END();
+
+		// Server-side heal feedback: brief, soft green screen fade on the player.
+		UTIL_ScreenFade( pPlayer, Vector( 0.0f, 255.0f, 0.0f ), 0.25f, 0.0f, 80, FFADE_IN );
 
 		EMIT_SOUND( ENT( pPlayer->pev ), CHAN_ITEM, "items/smallmedkit1.wav", 1, ATTN_NORM );
 

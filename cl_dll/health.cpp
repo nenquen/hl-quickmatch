@@ -61,6 +61,8 @@ int CHudHealth::Init( void )
 	m_fFade = 0;
 	m_iFlags = 0;
 	m_bitsDamage = 0;
+	m_flHealFlashStart = 0.0f;
+	m_flHealFlashEnd = 0.0f;
 	m_fAttackFront = m_fAttackRear = m_fAttackRight = m_fAttackLeft = 0;
 	giDmgHeight = 0;
 	giDmgWidth = 0;
@@ -82,6 +84,16 @@ void CHudHealth::Reset( void )
 	{
 		m_dmg[i].fExpire = 0;
 	}
+	m_flHealFlashStart = 0.0f;
+	m_flHealFlashEnd = 0.0f;
+}
+
+void CHudHealth::TriggerHealFlash( float duration )
+{
+	if( duration <= 0.0f )
+		return;
+	m_flHealFlashStart = gHUD.m_flTime;
+	m_flHealFlashEnd = gHUD.m_flTime + duration;
 }
 
 int CHudHealth::VidInit( void )
@@ -226,7 +238,25 @@ int CHudHealth::Draw( float flTime )
 		// Draw health number.
 		x = baseX;
 		x = gHUD.DrawHudNumber( x, y + gHUD.m_iHudNumbersYOffset, DHN_3DIGITS | DHN_DRAWZERO, m_iHealth, r, g, b );
+		
+	}
 
+	if( m_flHealFlashEnd > gHUD.m_flTime )
+	{
+		float total = m_flHealFlashEnd - m_flHealFlashStart;
+		if( total <= 0.0f )
+			total = 0.0001f;
+		float remaining = m_flHealFlashEnd - gHUD.m_flTime;
+		float t = remaining / total; // 1.0 at start, 0.0 at end
+		if( t < 0.0f )
+			t = 0.0f;
+		if( t > 1.0f )
+			t = 1.0f;
+		int alpha = (int)( 120.0f * t );
+		if( alpha > 0 )
+		{
+			gEngfuncs.pfnFillRGBABlend( 0, 0, ScreenWidth, ScreenHeight, 0, 255, 0, alpha );
+		}
 	}
 
 	DrawDamage( flTime );

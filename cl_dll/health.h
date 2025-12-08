@@ -107,6 +107,7 @@ public:
 	virtual void Reset( void );
 	int MsgFunc_Health( const char *pszName,  int iSize, void *pbuf );
 	int MsgFunc_Damage( const char *pszName,  int iSize, void *pbuf );
+	void TriggerHealFlash( float duration );
 	int m_iHealth;
 	int m_HUD_dmg_bio;
 	int m_HUD_cross;
@@ -117,6 +118,8 @@ public:
 private:
 	HSPRITE m_hSprite;
 	HSPRITE m_hDamage;
+	float m_flHealFlashStart;
+	float m_flHealFlashEnd;
 	
 	DAMAGE_IMAGE m_dmg[NUM_DMG_TYPES];
 	int m_bitsDamage;
