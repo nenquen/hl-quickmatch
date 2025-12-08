@@ -71,11 +71,9 @@ public:
 #define WEAPON_CROSSBOW			6
 #define WEAPON_SHOTGUN			7
 #define WEAPON_RPG				8
-#define WEAPON_HORNETGUN		9
 #define WEAPON_AWP			10
 #define WEAPON_HANDGRENADE		12
 #define WEAPON_TRIPMINE			13
-#define	WEAPON_SATCHEL			14
 #define	WEAPON_SNARK			15
 
 #define WEAPON_ALLWEAPONS		(~(1<<WEAPON_SUIT))
@@ -92,11 +90,9 @@ public:
 #define SHOTGUN_WEIGHT		15
 #define CROSSBOW_WEIGHT		10
 #define RPG_WEIGHT			20
-#define HORNETGUN_WEIGHT	15
 #define AWP_WEIGHT			20
 #define HANDGRENADE_WEIGHT	5
 #define SNARK_WEIGHT		5
-#define SATCHEL_WEIGHT		-10
 #define TRIPMINE_WEIGHT		-10
 
 // weapon clip/carry ammo capacities
@@ -107,10 +103,8 @@ public:
 #define BOLT_MAX_CARRY		50
 #define ROCKET_MAX_CARRY		5
 #define HANDGRENADE_MAX_CARRY	10
-#define SATCHEL_MAX_CARRY		5
 #define TRIPMINE_MAX_CARRY		5
 #define SNARK_MAX_CARRY		15
-#define HORNET_MAX_CARRY		8
 #define M203_GRENADE_MAX_CARRY	10
 
 // the maximum amount of ammo each weapon's clip can hold
@@ -124,11 +118,9 @@ public:
 #define CROSSBOW_MAX_CLIP		5
 #define RPG_MAX_CLIP			1
 #define AWP_MAX_CLIP			10
-#define HORNETGUN_MAX_CLIP		WEAPON_NOCLIP
 #define HANDGRENADE_MAX_CLIP	WEAPON_NOCLIP
-#define SATCHEL_MAX_CLIP		WEAPON_NOCLIP
 #define TRIPMINE_MAX_CLIP		WEAPON_NOCLIP
-#define SNARK_MAX_CLIP			WEAPON_NOCLIP
+#define SNARK_MAX_CLIP		WEAPON_NOCLIP
 
 // the default amount of ammo that comes with each gun when it spawns
 #define GLOCK_DEFAULT_GIVE			17
@@ -141,7 +133,6 @@ public:
 #define RPG_DEFAULT_GIVE			1
 #define AWP_DEFAULT_GIVE		10
 #define HANDGRENADE_DEFAULT_GIVE	5
-#define SATCHEL_DEFAULT_GIVE		1
 #define TRIPMINE_DEFAULT_GIVE		1
 #define SNARK_DEFAULT_GIVE		5
 #define HIVEHAND_DEFAULT_GIVE		8
@@ -312,7 +303,7 @@ public:
 	virtual void SecondaryAttack( void ) { return; }			// do "+ATTACK2"
 	virtual void Reload( void ) { return; }						// do "+RELOAD"
 	virtual void WeaponIdle( void ) { return; }					// called when no buttons pressed
-	virtual int UpdateClientData( CBasePlayer *pPlayer );		// sends hud info to client dll, if things have changed
+	virtual int UpdateClientData( CBasePlayer *pPlayer );		// sends HUD info to client dll, if things have changed
 	virtual void RetireWeapon( void );
 	virtual BOOL ShouldWeaponIdle( void ) {return FALSE; };
 	virtual void Holster( int skiplocal = 0 );
@@ -334,8 +325,8 @@ public:
 	int		m_iPrimaryAmmoType;									// "primary" ammo index into players m_rgAmmo[]
 	int		m_iSecondaryAmmoType;								// "secondary" ammo index into players m_rgAmmo[]
 	int		m_iClip;											// number of shots left in the primary weapon clip, -1 it not used
-	int		m_iClientClip;										// the last version of m_iClip sent to hud dll
-	int		m_iClientWeaponState;								// the last version of the weapon state sent to hud dll (is current weapon, is on target)
+	int		m_iClientClip;										// the last version of m_iClip sent to HUD dll
+	int		m_iClientWeaponState;								// the last version of the weapon state sent to HUD dll (is current weapon, is on target)
 	int		m_fInReload;										// Are we in the middle of a reload;
 
 	int		m_iDefaultAmmo;// how much ammo you get when you pick up this weapon as placed by a level designer.
@@ -726,158 +717,6 @@ public:
 	int m_iTrail;
 	float m_flIgniteTime;
 	EHANDLE m_hLauncher; // handle back to the launcher that fired me. 
-};
-
-class CGauss : public CBasePlayerWeapon
-{
-public:
-#if !CLIENT_DLL
-	int		Save( CSave &save );
-	int		Restore( CRestore &restore );
-	static	TYPEDESCRIPTION m_SaveData[];
-#endif
-	void Spawn( void );
-	void Precache( void );
-	int iItemSlot( void ) { return 4; }
-	int GetItemInfo(ItemInfo *p);
-	int AddToPlayer( CBasePlayer *pPlayer );
-
-	BOOL Deploy( void );
-	void Holster( int skiplocal = 0  );
-
-	void PrimaryAttack( void );
-	void SecondaryAttack( void );
-	void WeaponIdle( void );
-
-	void StartFire( void );
-	void Fire( Vector vecOrigSrc, Vector vecDirShooting, float flDamage );
-	float GetFullChargeTime( void );
-	int m_iBalls;
-	int m_iGlow;
-	int m_iBeam;
-	int m_iSoundState; // don't save this
-
-	// was this weapon just fired primary or secondary?
-	// we need to know so we can pick the right set of effects. 
-	BOOL m_fPrimaryFire;
-
-	virtual BOOL UseDecrement( void )
-	{ 
-#if CLIENT_WEAPONS
-		return TRUE;
-#else
-		return FALSE;
-#endif
-	}
-
-private:
-	unsigned short m_usGaussFire;
-	unsigned short m_usGaussSpin;
-};
-
-class CEgon : public CBasePlayerWeapon
-{
-public:
-#if !CLIENT_DLL
-	int		Save( CSave &save );
-	int		Restore( CRestore &restore );
-	static	TYPEDESCRIPTION m_SaveData[];
-#endif
-	void Spawn( void );
-	void Precache( void );
-	int iItemSlot( void ) { return 4; }
-	int GetItemInfo(ItemInfo *p);
-	int AddToPlayer( CBasePlayer *pPlayer );
-
-	BOOL Deploy( void );
-	BOOL CanHolster( void );
-	void Holster( int skiplocal = 0 );
-
-	void UpdateEffect( const Vector &startPoint, const Vector &endPoint, float timeBlend );
-
-	void CreateEffect ( void );
-	void DestroyEffect ( void );
-	void EndAttack( void );
-	void Attack( void );
-	void PrimaryAttack( void );
-	void WeaponIdle( void );
-
-	float m_flAmmoUseTime;// since we use < 1 point of ammo per update, we subtract ammo on a timer.
-
-	float GetPulseInterval( void );
-	float GetDischargeInterval( void );
-
-	void Fire( const Vector &vecOrigSrc, const Vector &vecDir );
-
-	BOOL HasAmmo( void );
-
-	void UseAmmo( int count );
-
-	enum EGON_FIREMODE { FIRE_NARROW, FIRE_WIDE};
-
-	CBeam				*m_pBeam;
-	CBeam				*m_pNoise;
-	CSprite				*m_pSprite;
-
-	virtual BOOL UseDecrement( void )
-	{
-#if CLIENT_WEAPONS
-		return TRUE;
-#else
-		return FALSE;
-#endif
-	}
-
-	unsigned short m_usEgonStop;
-
-private:
-#if !CLIENT_DLL
-	float				m_shootTime;
-#endif
-	EGON_FIREMODE		m_fireMode;
-	float				m_shakeTime;
-	BOOL				m_deployed;
-
-	unsigned short m_usEgonFire;
-};
-
-class CHgun : public CBasePlayerWeapon
-{
-public:
-#if !CLIENT_DLL
-	int		Save( CSave &save );
-	int		Restore( CRestore &restore );
-	static	TYPEDESCRIPTION m_SaveData[];
-#endif
-	void Spawn( void );
-	void Precache( void );
-	int iItemSlot( void ) { return 4; }
-	int GetItemInfo(ItemInfo *p);
-	int AddToPlayer( CBasePlayer *pPlayer );
-
-	void PrimaryAttack( void );
-	void SecondaryAttack( void );
-	BOOL Deploy( void );
-	BOOL IsUseable( void );
-	void Holster( int skiplocal = 0 );
-	void Reload( void );
-	void WeaponIdle( void );
-	float m_flNextAnimTime;
-
-	float m_flRechargeTime;
-
-	int m_iFirePhase;
-
-	virtual BOOL UseDecrement( void )
-	{ 
-#if CLIENT_WEAPONS
-		return TRUE;
-#else
-		return FALSE;
-#endif
-	}
-private:
-	unsigned short m_usHornetFire;
 };
 
 class CHandGrenade : public CBasePlayerWeapon
