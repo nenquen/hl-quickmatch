@@ -164,29 +164,38 @@ int HistoryResource::DrawAmmoHistory( float flTime )
 				
 				// Measure text width using console font utilities.
 				int textWidth = ConsoleStringLen( fullText );
-				// Use some padding so there is visible empty space on the right side again.
-				int paddingXLeft = XRES( 2 );
-				int paddingXRight = XRES( 20 );
-				int paddingY = YRES( 2 );
+				// Slightly larger padding for a cleaner pill-shaped box.
+				int paddingXLeft = XRES( 4 );
+				int paddingXRight = XRES( 22 );
+				int paddingY = YRES( 3 );
 				int boxWidth = textWidth + paddingXLeft + paddingXRight;
 				int boxHeight = gHUD.m_iFontHeight + paddingY * 2;
 				
 				// Position box anchored near the right side of the screen with a small margin.
-				int rightMargin = XRES( 6 );
+				int rightMargin = XRES( 10 );
 				int boxX = screenInfo.iWidth - boxWidth - rightMargin;
-				int boxY = ypos;
+				int boxY = ypos - YRES( 1 );
 				
 				// Background: translucent black, alpha similar to death notices.
 				int bgR = 0, bgG = 0, bgB = 0;
-				int bgA = (int)( 100.0f * ( clampedScale / 255.0f ) );
+				int bgA = (int)( 110.0f * ( clampedScale / 255.0f ) );
 				if( bgA > 0 )
 				{
 					gEngfuncs.pfnFillRGBABlend( boxX, boxY, boxWidth, boxHeight, bgR, bgG, bgB, bgA );
 				}
 				
-				// Text position inside the box.
+				// Accent bar on the left edge of the box.
+				int accentWidth = XRES( 3 );
+				int accentR = 0, accentG = 255, accentB = 128;
+				int accentA = (int)( 160.0f * ( clampedScale / 255.0f ) );
+				if( accentA > 0 )
+				{
+					gEngfuncs.pfnFillRGBABlend( boxX, boxY, accentWidth, boxHeight, accentR, accentG, accentB, accentA );
+				}
+				
+				// Text position inside the box; center it vertically within padding.
 				int textX = boxX + paddingXLeft;
-				int textY = boxY + paddingY;
+				int textY = boxY + ( boxHeight - gHUD.m_iFontHeight ) / 2;
 				
 				// Compute green->white flash for the text based on how new this entry is.
 				float totalTime = CVAR_GET_FLOAT( "hud_drawhistory_time" );
@@ -207,10 +216,19 @@ int HistoryResource::DrawAmmoHistory( float flTime )
 				}
 				
 				// Text color: blend from green to white based on flashT, then apply alpha fade.
-				int r = (int)( ( 1.0f - flashT ) * 255.0f );
+				// Make the flash a bit stronger by biasing towards pure green when very new.
+				float flashBias = 0.35f;
+				float flashMix = Q_min( 1.0f, flashT + flashBias );
+				int r = (int)( ( 1.0f - flashMix ) * 255.0f );
 				int g = 255;
-				int b = (int)( ( 1.0f - flashT ) * 255.0f );
+				int b = (int)( ( 1.0f - flashMix ) * 255.0f );
 				ScaleColors( r, g, b, (int)clampedScale );
+				
+				// Subtle drop shadow to improve readability over bright backgrounds.
+				int shadowR = 0, shadowG = 0, shadowB = 0;
+				int shadowA = (int)( clampedScale * 0.7f );
+				ScaleColors( shadowR, shadowG, shadowB, shadowA );
+				DrawUtfString( textX + 1, textY + 1, ScreenWidth, fullText, shadowR, shadowG, shadowB );
 				DrawUtfString( textX, textY, ScreenWidth, fullText, r, g, b );
 			}
 			else if( rgAmmoHistory[i].type == HISTSLOT_ITEM )
