@@ -430,9 +430,4 @@ CGrenade *CGrenade::ShootTimed( entvars_t *pevOwner, Vector vecStart, Vector vec
 	return pGrenade;
 }
 
-	pGrenade->pev->dmg = gSkillData.plrDmgHandGrenade;
-
-	return pGrenade;
-}
-
 //======================end grenade
