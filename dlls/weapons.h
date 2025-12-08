@@ -21,20 +21,13 @@
 class CBasePlayer;
 extern int gmsgWeapPickup;
 
-void DeactivateSatchels( CBasePlayer *pOwner );
-
-// Contact Grenade / Timed grenade / Satchel Charge
+// Contact Grenade / Timed grenade
 class CGrenade : public CBaseMonster
 {
 public:
 	void Spawn( void );
-
-	typedef enum { SATCHEL_DETONATE = 0, SATCHEL_RELEASE } SATCHELCODE;
-
 	static CGrenade *ShootTimed( entvars_t *pevOwner, Vector vecStart, Vector vecVelocity, float time );
 	static CGrenade *ShootContact( entvars_t *pevOwner, Vector vecStart, Vector vecVelocity );
-	static CGrenade *ShootSatchelCharge( entvars_t *pevOwner, Vector vecStart, Vector vecVelocity );
-	static void UseSatchelCharges( entvars_t *pevOwner, SATCHELCODE code );
 
 	void Explode( Vector vecSrc, Vector vecAim );
 	virtual void Explode( TraceResult *pTrace, int bitsDamageType );
@@ -68,7 +61,6 @@ public:
 #define WEAPON_PYTHON			3
 #define WEAPON_MP5				4
 #define WEAPON_CHAINGUN			5
-#define WEAPON_CROSSBOW			6
 #define WEAPON_SHOTGUN			7
 #define WEAPON_RPG				8
 #define WEAPON_AWP			10
@@ -88,7 +80,6 @@ public:
 #define PYTHON_WEIGHT		15
 #define MP5_WEIGHT			15
 #define SHOTGUN_WEIGHT		15
-#define CROSSBOW_WEIGHT		10
 #define RPG_WEIGHT			20
 #define AWP_WEIGHT			20
 #define HANDGRENADE_WEIGHT	5
@@ -100,7 +91,6 @@ public:
 #define _9MM_MAX_CARRY			250
 #define _357_MAX_CARRY			36
 #define BUCKSHOT_MAX_CARRY		125
-#define BOLT_MAX_CARRY		50
 #define ROCKET_MAX_CARRY		5
 #define HANDGRENADE_MAX_CARRY	10
 #define TRIPMINE_MAX_CARRY		5
@@ -115,7 +105,6 @@ public:
 #define PYTHON_MAX_CLIP			6
 #define MP5_MAX_CLIP			50
 #define SHOTGUN_MAX_CLIP		8
-#define CROSSBOW_MAX_CLIP		5
 #define RPG_MAX_CLIP			1
 #define AWP_MAX_CLIP			10
 #define HANDGRENADE_MAX_CLIP	WEAPON_NOCLIP
@@ -129,7 +118,6 @@ public:
 #define MP5_DEFAULT_GIVE_MP			MP5_MAX_CLIP
 #define MP5_M203_DEFAULT_GIVE		0
 #define SHOTGUN_DEFAULT_GIVE		12
-#define CROSSBOW_DEFAULT_GIVE		5
 #define RPG_DEFAULT_GIVE			1
 #define AWP_DEFAULT_GIVE		10
 #define HANDGRENADE_DEFAULT_GIVE	5
@@ -144,7 +132,6 @@ public:
 #define AMMO_CHAINBOX_GIVE		200
 #define AMMO_M203BOX_GIVE		2
 #define AMMO_BUCKSHOTBOX_GIVE	12
-#define AMMO_CROSSBOWCLIP_GIVE	CROSSBOW_MAX_CLIP
 #define AMMO_RPGCLIP_GIVE		RPG_MAX_CLIP
 #define AMMO_AWP_GIVE			AWP_MAX_CLIP
 #define AMMO_SNARKBOX_GIVE		5
@@ -568,40 +555,6 @@ public:
 private:
 	unsigned short m_usMP5;
 	unsigned short m_usMP52;
-};
-
-class CCrossbow : public CBasePlayerWeapon
-{
-public:
-	void Spawn( void );
-	void Precache( void );
-	int iItemSlot( ) { return 3; }
-	int GetItemInfo(ItemInfo *p);
-
-	void FireBolt( void );
-	void FireSniperBolt( void );
-	void PrimaryAttack( void );
-	void SecondaryAttack( void );
-	int AddToPlayer( CBasePlayer *pPlayer );
-	BOOL Deploy( );
-	void Holster( int skiplocal = 0 );
-	void Reload( void );
-	void WeaponIdle( void );
-
-	int m_fInZoom; // don't save this
-
-	virtual BOOL UseDecrement( void )
-	{ 
-#if CLIENT_WEAPONS
-		return TRUE;
-#else
-		return FALSE;
-#endif
-	}
-
-private:
-	unsigned short m_usCrossbow;
-	unsigned short m_usCrossbow2;
 };
 
 class CShotgun : public CBasePlayerWeapon

@@ -3629,8 +3629,6 @@ void CBasePlayer::CheatImpulseCommands( int iImpulse )
 #if !OEM_BUILD
 		GiveNamedItem( "weapon_357" );
 		GiveNamedItem( "ammo_357" );
-		GiveNamedItem( "weapon_crossbow" );
-		GiveNamedItem( "ammo_crossbow" );
 		GiveNamedItem( "weapon_rpg" );
 		GiveNamedItem( "ammo_rpgclip" );
 		GiveNamedItem( "weapon_snark" );

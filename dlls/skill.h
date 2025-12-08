@@ -99,15 +99,8 @@ struct skilldata_t
 	float plrDmgMP5;
 	float plrDmgM203Grenade;
 	float plrDmgBuckshot;
-	float plrDmgCrossbowClient;
-	float plrDmgCrossbowMonster;
 	float plrDmgRPG;
-	float plrDmgGauss;
-	float plrDmgEgonNarrow;
-	float plrDmgEgonWide;
-	float plrDmgHornet;
 	float plrDmgHandGrenade;
-	float plrDmgSatchel;
 	float plrDmgTripmine;
 	
 	// weapons shared by monsters

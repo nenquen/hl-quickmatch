@@ -19,86 +19,30 @@
 #include "cbase.h"
 #include "monsters.h"
 #include "weapons.h"
-#include "nodes.h"
-#include "player.h"
-#include "hornet.h"
-#include "gamerules.h"
 
-enum hgun_e
-{
-	HGUN_IDLE1 = 0,
-	HGUN_FIDGETSWAY,
-	HGUN_FIDGETSHAKE,
-	HGUN_DOWN,
-	HGUN_UP,
-	HGUN_SHOOT
-};
+// Minimal stub for the removed hornetgun weapon so that
+// any existing weapon_hornetgun entities are safely discarded.
 
-enum firemode_e
+class CHgun : public CBasePlayerWeapon
 {
-	FIREMODE_TRACK = 0,
-	FIREMODE_FAST
+public:
+	void Spawn( void )
+	{
+		// Weapon disabled: immediately remove the entity so it cannot be used.
+		UTIL_Remove( this );
+	}
+
+	void Precache( void ) { }
+	int GetItemInfo( ItemInfo * ) { return 0; }
+	int AddToPlayer( CBasePlayer * ) { return 0; }
+	BOOL Deploy( void ) { return FALSE; }
+	BOOL IsUseable( void ) { return FALSE; }
+	void Holster( int ) { }
+	void PrimaryAttack( void ) { }
+	void SecondaryAttack( void ) { }
+	void Reload( void ) { }
+	void WeaponIdle( void ) { }
 };
 
 LINK_ENTITY_TO_CLASS( weapon_hornetgun, CHgun )
-
-void CHgun::Spawn()
-{
-	// Weapon disabled: immediately remove the entity so it cannot be used.
-	UTIL_Remove( this );
-}
-
-void CHgun::Precache( void )
-{
-	// No-op: hornet gun is fully disabled as a player weapon.
-}
-
-int CHgun::GetItemInfo( ItemInfo *p )
-{
-	// Hornet gun is disabled; do not register any usable item info.
-	return 0;
-}
-
-int CHgun::AddToPlayer( CBasePlayer *pPlayer )
-{
-	// Never actually added to the player's inventory.
-	return 0;
-}
-
-BOOL CHgun::Deploy( void )
-{
-	// Never deploy; weapon is removed on spawn.
-	return FALSE;
-}
-
-BOOL CHgun::IsUseable( void )
-{
-	// Not useable by players.
-	return FALSE;
-}
-
-void CHgun::Holster( int /*skiplocal*/ )
-{
-	// No-op; hornet gun should never be holstered in normal play.
-}
-
-void CHgun::PrimaryAttack( void )
-{
-	// No-op; weapon is disabled.
-}
-
-void CHgun::SecondaryAttack( void )
-{
-	// No-op; weapon is disabled.
-}
-
-void CHgun::Reload( void )
-{
-	// No-op; weapon is disabled.
-}
-
-void CHgun::WeaponIdle( void )
-{
-	// No-op; weapon is disabled.
-}
 #endif
