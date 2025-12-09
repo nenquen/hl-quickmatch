@@ -65,8 +65,6 @@ public:
 #define WEAPON_RPG				8
 #define WEAPON_AWP			10
 #define WEAPON_HANDGRENADE		12
-#define WEAPON_TRIPMINE			13
-#define	WEAPON_SNARK			15
 
 #define WEAPON_ALLWEAPONS		(~(1<<WEAPON_SUIT))
 
@@ -83,8 +81,6 @@ public:
 #define RPG_WEIGHT			20
 #define AWP_WEIGHT			20
 #define HANDGRENADE_WEIGHT	5
-#define SNARK_WEIGHT		5
-#define TRIPMINE_WEIGHT		-10
 
 // weapon clip/carry ammo capacities
 #define URANIUM_MAX_CARRY		100
@@ -93,8 +89,6 @@ public:
 #define BUCKSHOT_MAX_CARRY		125
 #define ROCKET_MAX_CARRY		5
 #define HANDGRENADE_MAX_CARRY	10
-#define TRIPMINE_MAX_CARRY		5
-#define SNARK_MAX_CARRY		15
 #define M203_GRENADE_MAX_CARRY	10
 
 // the maximum amount of ammo each weapon's clip can hold
@@ -108,8 +102,6 @@ public:
 #define RPG_MAX_CLIP			1
 #define AWP_MAX_CLIP			10
 #define HANDGRENADE_MAX_CLIP	WEAPON_NOCLIP
-#define TRIPMINE_MAX_CLIP		WEAPON_NOCLIP
-#define SNARK_MAX_CLIP		WEAPON_NOCLIP
 
 // the default amount of ammo that comes with each gun when it spawns
 #define GLOCK_DEFAULT_GIVE			17
@@ -121,9 +113,6 @@ public:
 #define RPG_DEFAULT_GIVE			1
 #define AWP_DEFAULT_GIVE		10
 #define HANDGRENADE_DEFAULT_GIVE	5
-#define TRIPMINE_DEFAULT_GIVE		1
-#define SNARK_DEFAULT_GIVE		5
-#define HIVEHAND_DEFAULT_GIVE		8
 
 // The amount of ammo given to a player by an ammo item.
 #define AMMO_GLOCKCLIP_GIVE		GLOCK_MAX_CLIP
@@ -134,7 +123,6 @@ public:
 #define AMMO_BUCKSHOTBOX_GIVE	12
 #define AMMO_RPGCLIP_GIVE		RPG_MAX_CLIP
 #define AMMO_AWP_GIVE			AWP_MAX_CLIP
-#define AMMO_SNARKBOX_GIVE		5
 
 // bullet types
 typedef enum
@@ -697,94 +685,6 @@ public:
 	}
 };
 
-class CSatchel : public CBasePlayerWeapon
-{
-public:
-	void Spawn( void );
-	void Precache( void );
-	int iItemSlot( void ) { return 5; }
-	int GetItemInfo(ItemInfo *p);
-	int AddToPlayer( CBasePlayer *pPlayer );
-	void PrimaryAttack( void );
-	void SecondaryAttack( void );
-	int AddDuplicate( CBasePlayerItem *pOriginal );
-	BOOL CanDeploy( void );
-	BOOL Deploy( void );
-	BOOL IsUseable( void );
-
-	void Holster( int skiplocal = 0 );
-	void WeaponIdle( void );
-	void Throw( void );
-
-	virtual BOOL UseDecrement( void )
-	{ 
-#if CLIENT_WEAPONS
-		return TRUE;
-#else
-		return FALSE;
-#endif
-	}
-};
-
-class CTripmine : public CBasePlayerWeapon
-{
-public:
-	void Spawn( void );
-	void Precache( void );
-	int iItemSlot( void ) { return 5; }
-	int GetItemInfo(ItemInfo *p);
-	void SetObjectCollisionBox( void )
-	{
-		//!!!BUGBUG - fix the model!
-		pev->absmin = pev->origin + Vector(-16, -16, -5);
-		pev->absmax = pev->origin + Vector(16, 16, 28); 
-	}
-
-	void PrimaryAttack( void );
-	BOOL Deploy( void );
-	void Holster( int skiplocal = 0 );
-	void WeaponIdle( void );
-
-	virtual BOOL UseDecrement( void )
-	{ 
-#if CLIENT_WEAPONS
-		return TRUE;
-#else
-		return FALSE;
-#endif
-	}
-
-private:
-	unsigned short m_usTripFire;
-};
-
-class CSqueak : public CBasePlayerWeapon
-{
-public:
-	void Spawn( void );
-	void Precache( void );
-	int iItemSlot( void ) { return 5; }
-	int GetItemInfo(ItemInfo *p);
-
-	void PrimaryAttack( void );
-	void SecondaryAttack( void );
-	BOOL Deploy( void );
-	void Holster( int skiplocal = 0 );
-	void WeaponIdle( void );
-	int m_fJustThrown;
-
-	virtual BOOL UseDecrement( void )
-	{
-#if CLIENT_WEAPONS
-		return TRUE;
-#else
-		return FALSE;
-#endif
-	}
-
-private:
-	unsigned short m_usSnarkFire;
-};
 
 class CAwp : public CBasePlayerWeapon
 {

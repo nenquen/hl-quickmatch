@@ -80,10 +80,6 @@ struct skilldata_t
 
 	float scientistHealth;
 
-	float snarkHealth;
-	float snarkDmgBite;
-	float snarkDmgPop;
-
 	float zombieHealth;
 	float zombieDmgOneSlash;
 	float zombieDmgBothSlash;
@@ -101,13 +97,11 @@ struct skilldata_t
 	float plrDmgBuckshot;
 	float plrDmgRPG;
 	float plrDmgHandGrenade;
-	float plrDmgTripmine;
 	
 	// weapons shared by monsters
 	float monDmg9MM;
 	float monDmgMP5;
 	float monDmg12MM;
-	float monDmgHornet;
 
 	// health/suit charge
 	float suitchargerCapacity;

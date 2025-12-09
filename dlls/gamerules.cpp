@@ -203,11 +203,6 @@ void CGameRules::RefreshSkillData ( void )
 	// Scientist
 	gSkillData.scientistHealth = GetSkillCvar( "sk_scientist_health" );
 
-	// Snark
-	gSkillData.snarkHealth = GetSkillCvar( "sk_snark_health" );
-	gSkillData.snarkDmgBite = GetSkillCvar( "sk_snark_dmg_bite" );
-	gSkillData.snarkDmgPop = GetSkillCvar( "sk_snark_dmg_pop" );
-
 	// Zombie
 	gSkillData.zombieHealth = GetSkillCvar( "sk_zombie_health" );
 	gSkillData.zombieDmgOneSlash = GetSkillCvar( "sk_zombie_dmg_one_slash" );
@@ -245,19 +240,13 @@ void CGameRules::RefreshSkillData ( void )
 	// RPG
 	gSkillData.plrDmgRPG = GetSkillCvar( "sk_plr_rpg" );
 
-	// Hand Grendade
+	// Hand grenade
 	gSkillData.plrDmgHandGrenade = GetSkillCvar( "sk_plr_hand_grenade" );
-
-	// Tripmine
-	gSkillData.plrDmgTripmine = GetSkillCvar( "sk_plr_tripmine" );
 
 	// MONSTER WEAPONS
 	gSkillData.monDmg12MM = GetSkillCvar( "sk_12mm_bullet" );
 	gSkillData.monDmgMP5 = GetSkillCvar ("sk_9mmAR_bullet" );
 	gSkillData.monDmg9MM = GetSkillCvar( "sk_9mm_bullet" );
-
-	// MONSTER HORNET
-	gSkillData.monDmgHornet = GetSkillCvar( "sk_hornet_dmg" );
 
 	// HEALTH/CHARGE
 	gSkillData.suitchargerCapacity = GetSkillCvar( "sk_suitcharger" );

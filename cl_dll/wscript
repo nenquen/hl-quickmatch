@@ -79,20 +79,14 @@ def build(bld):
 	source += bld.path.parent.ant_glob([
 		'public/safe_snprintf.c',
 		'pm_shared/*.c',
-		'dlls/crossbow.cpp',
 		'dlls/knife.cpp',
-		'dlls/egon.cpp',
-		'dlls/gauss.cpp',
 		'dlls/glock.cpp',
 		'dlls/handgrenade.cpp',
-		'dlls/hornetgun.cpp',
 		'dlls/mp5.cpp',
 		'dlls/python.cpp',
 		'dlls/rpg.cpp',
-		'dlls/satchel.cpp',
 		'dlls/shotgun.cpp',
-		'dlls/squeakgrenade.cpp',
-		'dlls/tripmine.cpp'
+		'dlls/shotgun.cpp'
 	])
 
 

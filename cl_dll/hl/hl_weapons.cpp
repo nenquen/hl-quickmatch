@@ -48,12 +48,7 @@ static globalvars_t Globals;
 
 static CBasePlayerWeapon *g_pWpns[MAX_WEAPONS];
 
-float g_flApplyVel = 0.0;
-int g_irunninggausspred = 0;
-
-vec3_t previousorigin;
-
-// HLDM Weapon placeholder entities.
+// HLDM Weapon placeholder entities for client-side prediction
 CGlock g_Glock;
 CCrowbar g_Crowbar;
 CPython g_Python;
@@ -61,8 +56,6 @@ CMP5 g_Mp5;
 CShotgun g_Shotgun;
 CRpg g_Rpg;
 CHandGrenade g_HandGren;
-CTripmine g_Tripmine;
-CSqueak g_Snark;
 CAwp g_Awp;
 
 /*
@@ -213,8 +206,6 @@ BOOL CBasePlayerWeapon::DefaultDeploy( const char *szViewModel, const char *szWe
 	gEngfuncs.CL_LoadModel( szViewModel, &m_pPlayer->pev->viewmodel );
 
 	SendWeaponAnim( iAnim, skiplocal, body );
-
-	g_irunninggausspred = false;
 	m_pPlayer->m_flNextAttack = 0.5f;
 	m_flTimeWeaponIdle = 1.0f;
 	return TRUE;
@@ -258,7 +249,6 @@ Put away weapon
 void CBasePlayerWeapon::Holster( int skiplocal /* = 0 */ )
 { 
 	m_fInReload = FALSE; // cancel any reload in progress.
-	g_irunninggausspred = false;
 	m_pPlayer->pev->viewmodel = 0; 
 }
 
@@ -462,7 +452,6 @@ void CBasePlayer::Killed( entvars_t *pevAttacker, int iGib )
 	if( m_pActiveItem )
 		 m_pActiveItem->Holster();
 
-	g_irunninggausspred = false;
 }
 
 /*
@@ -475,8 +464,6 @@ void CBasePlayer::Spawn( void )
 {
 	if( m_pActiveItem )
 		m_pActiveItem->Deploy( );
-
-	g_irunninggausspred = false;
 }
 
 /*
@@ -615,45 +602,7 @@ void HUD_InitClientWeapons( void )
 	HUD_PrepEntity( &g_Shotgun, &player );
 	HUD_PrepEntity( &g_Rpg, &player );
 	HUD_PrepEntity( &g_HandGren, &player );
-	HUD_PrepEntity( &g_Tripmine, &player );
-	HUD_PrepEntity( &g_Snark, &player );
 	HUD_PrepEntity( &g_Awp, &player );
-}
-
-/*
-=====================
-HUD_GetLastOrg
-
-Retruns the last position that we stored for egon beam endpoint.
-=====================
-*/
-void HUD_GetLastOrg( float *org )
-{
-	int i;
-
-	// Return last origin
-	for( i = 0; i < 3; i++ )
-	{
-		org[i] = previousorigin[i];
-	}
-}
-
-/*
-=====================
-HUD_SetLastOrg
-
-Remember our exact predicted origin so we can draw the egon to the right position.
-=====================
-*/
-void HUD_SetLastOrg( void )
-{
-	int i;
-
-	// Offset final origin by view_offset
-	for( i = 0; i < 3; i++ )
-	{
-		previousorigin[i] = g_finalstate->playerstate.origin[i] + g_finalstate->client.view_ofs[i];
-	}
 }
 
 /*
@@ -990,9 +939,6 @@ void HUD_WeaponsPostThink( local_state_s *from, local_state_s *to, usercmd_t *cm
 		to->client.fuser3 = -0.001f;
 	}
 
-	// Store off the last position from the predicted state.
-	HUD_SetLastOrg();
-
 	// Wipe it so we can't use it after this frame
 	g_finalstate = NULL;
 }
@@ -1021,14 +967,6 @@ void _DLLEXPORT HUD_PostRunCmd( struct local_state_s *from, struct local_state_s
 #endif
 	{
 		to->client.fov = g_lastFOV;
-	}
-
-	if( g_irunninggausspred == 1 )
-	{
-		Vector forward;
-		gEngfuncs.pfnAngleVectors( v_angles, forward, NULL, NULL );
-		to->client.velocity = to->client.velocity - forward * g_flApplyVel * 5; 
-		g_irunninggausspred = false;
 	}
 
 	// All games can use FOV state

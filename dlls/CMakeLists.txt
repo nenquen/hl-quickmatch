@@ -62,7 +62,6 @@ set (SVDLL_SOURCES
 	client.cpp
 	combat.cpp
 	controller.cpp
-	crossbow.cpp
 	knife.cpp
 	defaultai.cpp
 	doors.cpp
@@ -89,8 +88,6 @@ set (SVDLL_SOURCES
 	headcrab.cpp
 	healthkit.cpp
 	hgrunt.cpp
-	hornet.cpp
-	hornetgun.cpp
 	houndeye.cpp
 	ichthyosaur.cpp
 	islave.cpp
@@ -118,7 +115,6 @@ set (SVDLL_SOURCES
 	roach.cpp
 	rpg.cpp
 	awp.cpp
-	satchel.cpp
 	schedule.cpp
 	scientist.cpp
 	scripted.cpp
@@ -129,14 +125,12 @@ set (SVDLL_SOURCES
 	soundent.cpp
 	spectator.cpp
 	squadmonster.cpp
-	squeakgrenade.cpp
 	subs.cpp
 	talkmonster.cpp
 	teamplay_gamerules.cpp
 	tempmonster.cpp
 	tentacle.cpp
 	triggers.cpp
-	tripmine.cpp
 	turret.cpp
 	util.cpp
 	vehicle.cpp

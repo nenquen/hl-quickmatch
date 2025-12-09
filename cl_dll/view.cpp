@@ -1532,21 +1532,13 @@ int V_FindViewModelByWeaponModel(int weaponindex)
 {
 	static const char* modelmap[][2] =
 	{
-		{ "models/p_crossbow.mdl",	"models/v_crossbow.mdl" },
 		{ "models/p_crowbar.mdl",	"models/v_crowbar.mdl" },
-		{ "models/p_egon.mdl",		"models/v_egon.mdl" },
-		{ "models/p_gauss.mdl",		"models/v_gauss.mdl" },
 		{ "models/p_glock18.mdl", 	"models/v_glock18.mdl" },
 		{ "models/p_grenade.mdl",	"models/v_grenade.mdl" },
-		{ "models/p_hgun.mdl",		"models/v_hgun.mdl" },
-		{ "models/p_9mmAR.mdl",		"models/v_9mmAR.mdl" },
+		{ "models/p_9mmAR.mdl",	"models/v_9mmAR.mdl" },
 		{ "models/p_357.mdl",		"models/v_357.mdl" },
 		{ "models/p_rpg.mdl",		"models/v_rpg.mdl" },
 		{ "models/p_shotgun.mdl",	"models/v_shotgun.mdl" },
-		{ "models/p_squeak.mdl",	"models/v_squeak.mdl" },
-		{ "models/p_tripmine.mdl",	"models/v_tripmine.mdl" },
-		{ "models/p_satchel_radio.mdl",	"models/v_satchel_radio.mdl" },
-		{ "models/p_satchel.mdl",	"models/v_satchel.mdl" },
 		{ NULL, NULL }
 	};
 

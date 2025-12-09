@@ -765,57 +765,35 @@ void CBasePlayer::PackDeadPlayerItems( void )
 	iPA = 0;
 	iPW = 0;
 
-	if( g_pGameRules->IsBustingGame())
+	bool bPackItems = true;
+	if ( iAmmoRules == GR_PLR_DROP_AMMO_ACTIVE && iWeaponRules == GR_PLR_DROP_GUN_ACTIVE )
 	{
+		if ( rgpPackWeapons[0] == NULL )
+		{
+			bPackItems = false;
+		}
+	}
+
+	if ( bPackItems )
+	{
+		// pack the ammo
+		while( iPackAmmo[iPA] != -1 )
+		{
+			pWeaponBox->PackAmmo( MAKE_STRING( CBasePlayerItem::AmmoInfoArray[iPackAmmo[iPA]].pszName ), m_rgAmmo[iPackAmmo[iPA]] );
+			iPA++;
+		}
+
+		// now pack all of the items in the lists
 		while( rgpPackWeapons[iPW] )
 		{
 			// weapon unhooked from the player. Pack it into der box.
-			if( FClassnameIs( rgpPackWeapons[iPW]->pev, "weapon_egon" ))
-			{
-				pWeaponBox->PackWeapon( rgpPackWeapons[iPW] );
-				SET_MODEL( pWeaponBox->edict(), "models/w_egon.mdl" );
-				pWeaponBox->pev->velocity = g_vecZero;
-				pWeaponBox->pev->renderfx = kRenderFxGlowShell;
-				pWeaponBox->pev->renderamt = 25;
-				pWeaponBox->pev->rendercolor = Vector( 0, 75, 250 );
-				break;
-			}
+			pWeaponBox->PackWeapon( rgpPackWeapons[iPW] );
+
 			iPW++;
 		}
 	}
-	else
-	{
-		bool bPackItems = true;
-		if ( iAmmoRules == GR_PLR_DROP_AMMO_ACTIVE && iWeaponRules == GR_PLR_DROP_GUN_ACTIVE )
-		{
-			if ( rgpPackWeapons[0] == NULL
-				|| ( FClassnameIs( rgpPackWeapons[0]->pev, "weapon_satchel" ) && ( iPackAmmo[0] == -1 || ( m_rgAmmo[iPackAmmo[0]] == 0 ) ) ) )
-			{
-				bPackItems = false;
-			}
-		}
 
-		if ( bPackItems )
-		{
-			// pack the ammo
-			while( iPackAmmo[iPA] != -1 )
-			{
-				pWeaponBox->PackAmmo( MAKE_STRING( CBasePlayerItem::AmmoInfoArray[iPackAmmo[iPA]].pszName ), m_rgAmmo[iPackAmmo[iPA]] );
-				iPA++;
-			}
-
-			// now pack all of the items in the lists
-			while( rgpPackWeapons[iPW] )
-			{
-				// weapon unhooked from the player. Pack it into der box.
-				pWeaponBox->PackWeapon( rgpPackWeapons[iPW] );
-
-				iPW++;
-			}
-		}
-
-		pWeaponBox->pev->velocity = pev->velocity * 1.2f;// weaponbox has player's velocity, then some.
-	}
+	pWeaponBox->pev->velocity = pev->velocity * 1.2f;// weaponbox has player's velocity, then some.
 	RemoveAllItems( TRUE );// now strip off everything that wasn't handled by the code above.
 }
 
@@ -3622,13 +3600,11 @@ void CBasePlayer::CheatImpulseCommands( int iImpulse )
 		GiveNamedItem( "ammo_9mmAR" );
 		GiveNamedItem( "ammo_ARgrenades" );
 		GiveNamedItem( "weapon_handgrenade" );
-		GiveNamedItem( "weapon_tripmine" );
 #if !OEM_BUILD
 		GiveNamedItem( "weapon_357" );
 		GiveNamedItem( "ammo_357" );
 		GiveNamedItem( "weapon_rpg" );
 		GiveNamedItem( "ammo_rpgclip" );
-		GiveNamedItem( "weapon_snark" );
 #endif
 		gEvilImpulse101 = FALSE;
 		break;

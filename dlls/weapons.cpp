@@ -326,10 +326,6 @@ void W_Precache( void )
 	UTIL_PrecacheOtherWeapon( "weapon_357" );
 	UTIL_PrecacheOther( "ammo_357" );
 
-	// gauss
-	UTIL_PrecacheOtherWeapon( "weapon_gauss" );
-	UTIL_PrecacheOther( "ammo_gaussclip" );
-
 	// rpg
 	UTIL_PrecacheOtherWeapon( "weapon_rpg" );
 	UTIL_PrecacheOther( "ammo_rpgclip" );
@@ -338,10 +334,8 @@ void W_Precache( void )
 	UTIL_PrecacheOtherWeapon( "weapon_awp" );
 	UTIL_PrecacheOther( "ammo_awp" );
 
-	// egon
-	UTIL_PrecacheOtherWeapon( "weapon_egon" );
+	// egon/gauss/crossbow/other removed weapons are not precached or registered
 #endif
-	// tripmine, satchel: disabled weapons, do not precache or register
 	// hand grenade
 	UTIL_PrecacheOtherWeapon("weapon_handgrenade");
 #if !OEM_BUILD && !HLDEMO_BUILD

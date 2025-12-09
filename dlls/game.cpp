@@ -34,9 +34,7 @@ cvar_t timelimit	= { "mp_timelimit","0", FCVAR_SERVER };
 cvar_t friendlyfire	= { "mp_friendlyfire","0", FCVAR_SERVER };
 cvar_t falldamage	= { "mp_falldamage","0", FCVAR_SERVER };
 cvar_t weaponstay	= { "mp_weaponstay","0", FCVAR_SERVER };
-cvar_t selfgauss	= { "selfgauss", "1", FCVAR_SERVER };
 cvar_t chargerfix	= { "chargerfix", "0", FCVAR_SERVER };
-cvar_t satchelfix	= { "satchelfix", "1", FCVAR_SERVER };
 cvar_t explosionfix	= { "explosionfix", "0", FCVAR_SERVER };
 cvar_t monsteryawspeedfix	= { "monsteryawspeedfix", "1", FCVAR_SERVER };
 cvar_t corpsephysics = { "corpsephysics", "0", FCVAR_SERVER };
@@ -249,19 +247,6 @@ cvar_t	sk_scientist_health1 = {"sk_scientist_health1","0"};
 cvar_t	sk_scientist_health2 = {"sk_scientist_health2","0"};
 cvar_t	sk_scientist_health3 = {"sk_scientist_health3","0"};
 
-// Snark
-cvar_t	sk_snark_health1 = {"sk_snark_health1","0"};
-cvar_t	sk_snark_health2 = {"sk_snark_health2","0"};
-cvar_t	sk_snark_health3 = {"sk_snark_health3","0"};
-
-cvar_t	sk_snark_dmg_bite1 = {"sk_snark_dmg_bite1","0"};
-cvar_t	sk_snark_dmg_bite2 = {"sk_snark_dmg_bite2","0"};
-cvar_t	sk_snark_dmg_bite3 = {"sk_snark_dmg_bite3","0"};
-
-cvar_t	sk_snark_dmg_pop1 = {"sk_snark_dmg_pop1","0"};
-cvar_t	sk_snark_dmg_pop2 = {"sk_snark_dmg_pop2","0"};
-cvar_t	sk_snark_dmg_pop3 = {"sk_snark_dmg_pop3","0"};
-
 // Zombie
 cvar_t	sk_zombie_health1 = {"sk_zombie_health1","0"};
 cvar_t	sk_zombie_health2 = {"sk_zombie_health2","0"};
@@ -337,12 +322,6 @@ cvar_t	sk_plr_hand_grenade2 = {"sk_plr_hand_grenade2","0"};
 cvar_t	sk_plr_hand_grenade3 = {"sk_plr_hand_grenade3","0"};
 
 
-// Tripmine
-cvar_t	sk_plr_tripmine1 = {"sk_plr_tripmine1","0"};
-cvar_t	sk_plr_tripmine2 = {"sk_plr_tripmine2","0"};
-cvar_t	sk_plr_tripmine3 = {"sk_plr_tripmine3","0"};
-
-
 // WORLD WEAPONS
 cvar_t	sk_12mm_bullet1 = {"sk_12mm_bullet1","0"};
 cvar_t	sk_12mm_bullet2 = {"sk_12mm_bullet2","0"};
@@ -356,11 +335,6 @@ cvar_t	sk_9mm_bullet1 = {"sk_9mm_bullet1","0"};
 cvar_t	sk_9mm_bullet2 = {"sk_9mm_bullet2","0"};
 cvar_t	sk_9mm_bullet3 = {"sk_9mm_bullet3","0"};
 
-
-// HORNET
-cvar_t	sk_hornet_dmg1 = {"sk_hornet_dmg1","0"};
-cvar_t	sk_hornet_dmg2 = {"sk_hornet_dmg2","0"};
-cvar_t	sk_hornet_dmg3 = {"sk_hornet_dmg3","0"};
 
 // HEALTH/CHARGE
 cvar_t	sk_suitcharger1	= { "sk_suitcharger1","0" };
@@ -460,9 +434,7 @@ void GameDLLInit( void )
 	CVAR_REGISTER( &friendlyfire );
 	CVAR_REGISTER( &falldamage );
 	CVAR_REGISTER( &weaponstay );
-	CVAR_REGISTER( &selfgauss );
 	CVAR_REGISTER( &chargerfix );
-	CVAR_REGISTER( &satchelfix );
 	CVAR_REGISTER( &explosionfix );
 	CVAR_REGISTER( &monsteryawspeedfix );
 	CVAR_REGISTER( &corpsephysics );
@@ -658,19 +630,6 @@ void GameDLLInit( void )
 	CVAR_REGISTER( &sk_scientist_health2 );// {"sk_scientist_health2","0"};
 	CVAR_REGISTER( &sk_scientist_health3 );// {"sk_scientist_health3","0"};
 
-	// Snark
-	CVAR_REGISTER( &sk_snark_health1 );// {"sk_snark_health1","0"};
-	CVAR_REGISTER( &sk_snark_health2 );// {"sk_snark_health2","0"};
-	CVAR_REGISTER( &sk_snark_health3 );// {"sk_snark_health3","0"};
-
-	CVAR_REGISTER( &sk_snark_dmg_bite1 );// {"sk_snark_dmg_bite1","0"};
-	CVAR_REGISTER( &sk_snark_dmg_bite2 );// {"sk_snark_dmg_bite2","0"};
-	CVAR_REGISTER( &sk_snark_dmg_bite3 );// {"sk_snark_dmg_bite3","0"};
-
-	CVAR_REGISTER( &sk_snark_dmg_pop1 );// {"sk_snark_dmg_pop1","0"};
-	CVAR_REGISTER( &sk_snark_dmg_pop2 );// {"sk_snark_dmg_pop2","0"};
-	CVAR_REGISTER( &sk_snark_dmg_pop3 );// {"sk_snark_dmg_pop3","0"};
-
 	// Zombie
 	CVAR_REGISTER( &sk_zombie_health1 );// {"sk_zombie_health1","0"};
 	CVAR_REGISTER( &sk_zombie_health2 );// {"sk_zombie_health3","0"};
@@ -742,11 +701,6 @@ void GameDLLInit( void )
 	CVAR_REGISTER( &sk_plr_hand_grenade2 );// {"sk_plr_hand_grenade2","0"};
 	CVAR_REGISTER( &sk_plr_hand_grenade3 );// {"sk_plr_hand_grenade3","0"};
 
-	// Tripmine
-	CVAR_REGISTER( &sk_plr_tripmine1 );// {"sk_plr_tripmine1","0"};
-	CVAR_REGISTER( &sk_plr_tripmine2 );// {"sk_plr_tripmine2","0"};
-	CVAR_REGISTER( &sk_plr_tripmine3 );// {"sk_plr_tripmine3","0"};
-
 	// WORLD WEAPONS
 	CVAR_REGISTER( &sk_12mm_bullet1 );// {"sk_12mm_bullet1","0"};
 	CVAR_REGISTER( &sk_12mm_bullet2 );// {"sk_12mm_bullet2","0"};
@@ -759,11 +713,6 @@ void GameDLLInit( void )
 	CVAR_REGISTER( &sk_9mm_bullet1 );// {"sk_9mm_bullet1","0"};
 	CVAR_REGISTER( &sk_9mm_bullet2 );// {"sk_9mm_bullet2","0"};
 	CVAR_REGISTER( &sk_9mm_bullet3 );// {"sk_9mm_bullet3","0"};
-
-	// HORNET
-	CVAR_REGISTER( &sk_hornet_dmg1 );// {"sk_hornet_dmg1","0"};
-	CVAR_REGISTER( &sk_hornet_dmg2 );// {"sk_hornet_dmg2","0"};
-	CVAR_REGISTER( &sk_hornet_dmg3 );// {"sk_hornet_dmg3","0"};
 
 	// HEALTH/SUIT CHARGE DISTRIBUTION
 	CVAR_REGISTER( &sk_suitcharger1 );

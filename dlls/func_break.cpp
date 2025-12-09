@@ -55,9 +55,9 @@ const char *CBreakable::pSpawnObjects[] =
 	"ammo_rpgclip", 		// 15
 	NULL, 	// 16
 	"weapon_handgrenade", 	// 17
-	"weapon_tripmine", 	// 18
+	NULL, 	// 18 (was weapon_tripmine)
 	NULL, 	// 19
-	"weapon_snark", 		// 20
+	NULL, 	// 20 (was weapon_snark)
 	NULL, 	// 21
 };
 

@@ -24,7 +24,6 @@
 #include	"squadmonster.h"
 #include	"weapons.h"
 #include	"soundent.h"
-#include	"hornet.h"
 
 //=========================================================
 // monster-specific schedule types
@@ -49,11 +48,6 @@ int iAgruntMuzzleFlash;
 //=========================================================
 // Monster's Anim Events Go Here
 //=========================================================
-#define		AGRUNT_AE_HORNET1	( 1 )
-#define		AGRUNT_AE_HORNET2	( 2 )
-#define		AGRUNT_AE_HORNET3	( 3 )
-#define		AGRUNT_AE_HORNET4	( 4 )
-#define		AGRUNT_AE_HORNET5	( 5 )
 // some events are set up in the QC file that aren't recognized by the code yet.
 #define		AGRUNT_AE_PUNCH		( 6 )
 #define		AGRUNT_AE_BITE		( 7 )
@@ -110,9 +104,6 @@ public:
 	static const char *pIdleSounds[];
 	static const char *pAlertSounds[];
 
-	BOOL m_fCanHornetAttack;
-	float m_flNextHornetAttackCheck;
-
 	float m_flNextPainTime;
 
 	// three hacky fields for speech stuff. These don't really need to be saved.
@@ -125,8 +116,6 @@ LINK_ENTITY_TO_CLASS( monster_alien_grunt, CAGrunt )
 
 TYPEDESCRIPTION	CAGrunt::m_SaveData[] =
 {
-	DEFINE_FIELD( CAGrunt, m_fCanHornetAttack, FIELD_BOOLEAN ),
-	DEFINE_FIELD( CAGrunt, m_flNextHornetAttackCheck, FIELD_TIME ),
 	DEFINE_FIELD( CAGrunt, m_flNextPainTime, FIELD_TIME ),
 	DEFINE_FIELD( CAGrunt, m_flNextSpeakTime, FIELD_TIME ),
 	DEFINE_FIELD( CAGrunt, m_flNextWordTime, FIELD_TIME ),
@@ -623,8 +612,6 @@ void CAGrunt::Precache()
 	PRECACHE_SOUND( "hassault/hw_shoot1.wav" );
 
 	iAgruntMuzzleFlash = PRECACHE_MODEL( "sprites/muz4.spr" );
-
-	UTIL_PrecacheOther( "hornet" );
 }
 
 //=========================================================
@@ -704,70 +691,6 @@ Schedule_t slAGruntStandoff[] =
 	}
 };
 
-//=========================================================
-// Suppress
-//=========================================================
-Task_t tlAGruntSuppressHornet[] =
-{
-	{ TASK_STOP_MOVING, 0.0f },
-	{ TASK_RANGE_ATTACK1, 0.0f },
-};
-
-Schedule_t slAGruntSuppress[] =
-{
-	{
-		tlAGruntSuppressHornet,
-		ARRAYSIZE( tlAGruntSuppressHornet ),
-		0,
-		0,
-		"AGrunt Suppress Hornet",
-	},
-};
-
-//=========================================================
-// primary range attacks
-//=========================================================
-Task_t tlAGruntRangeAttack1[] =
-{
-	{ TASK_STOP_MOVING, 0.0f },
-	{ TASK_FACE_ENEMY, 0.0f },
-	{ TASK_RANGE_ATTACK1, 0.0f },
-};
-
-Schedule_t slAGruntRangeAttack1[] =
-{
-	{
-		tlAGruntRangeAttack1,
-		ARRAYSIZE( tlAGruntRangeAttack1 ),
-		bits_COND_NEW_ENEMY |
-		bits_COND_ENEMY_DEAD |
-		bits_COND_HEAVY_DAMAGE,
-		0,
-		"AGrunt Range Attack1"
-	},
-};
-
-Task_t tlAGruntHiddenRangeAttack1[] =
-{
-	{ TASK_SET_FAIL_SCHEDULE, (float)SCHED_STANDOFF },
-	{ TASK_AGRUNT_SETUP_HIDE_ATTACK, 0 },
-	{ TASK_STOP_MOVING, 0 },
-	{ TASK_FACE_IDEAL, 0 },
-	{ TASK_RANGE_ATTACK1_NOTURN, (float)0 },
-};
-
-Schedule_t slAGruntHiddenRangeAttack[] =
-{
-	{
-		tlAGruntHiddenRangeAttack1,
-		ARRAYSIZE ( tlAGruntHiddenRangeAttack1 ),
-		bits_COND_NEW_ENEMY |
-		bits_COND_HEAVY_DAMAGE |
-		bits_COND_HEAR_SOUND,
-		bits_SOUND_DANGER,
-		"AGrunt Hidden Range Attack1"
-	},
-};
 
 //=========================================================
 // Take cover from enemy! Tries lateral cover before node
@@ -863,9 +786,6 @@ DEFINE_CUSTOM_SCHEDULES( CAGrunt )
 	slAGruntFail,
 	slAGruntCombatFail,
 	slAGruntStandoff,
-	slAGruntSuppress,
-	slAGruntRangeAttack1,
-	slAGruntHiddenRangeAttack,
 	slAGruntTakeCoverFromEnemy,
 	slAGruntVictoryDance,
 	slAGruntThreatDisplay,
@@ -903,44 +823,6 @@ BOOL CAGrunt::CheckMeleeAttack1( float flDot, float flDist )
 	return FALSE;
 }
 
-//=========================================================
-// CheckRangeAttack1 
-//
-// !!!LATER - we may want to load balance this. Several
-// tracelines are done, so we may not want to do this every
-// server frame. Definitely not while firing. 
-//=========================================================
-BOOL CAGrunt::CheckRangeAttack1( float flDot, float flDist )
-{
-	if( gpGlobals->time < m_flNextHornetAttackCheck )
-	{
-		return m_fCanHornetAttack;
-	}
-
-	if( HasConditions( bits_COND_SEE_ENEMY ) && flDist >= AGRUNT_MELEE_DIST && flDist <= 1024.0f && flDot >= 0.5f && NoFriendlyFire() )
-	{
-		TraceResult tr;
-		Vector	vecArmPos, vecArmDir;
-
-		// verify that a shot fired from the gun will hit the enemy before the world.
-		// !!!LATER - we may wish to do something different for projectile weapons as opposed to instant-hit
-		UTIL_MakeVectors( pev->angles );
-		GetAttachment( 0, vecArmPos, vecArmDir );
-		//UTIL_TraceLine( vecArmPos, vecArmPos + gpGlobals->v_forward * 256.0f, ignore_monsters, ENT( pev ), &tr );
-		UTIL_TraceLine( vecArmPos, m_hEnemy->BodyTarget( vecArmPos ), dont_ignore_monsters, ENT( pev ), &tr );
-
-		if( tr.flFraction == 1.0f || tr.pHit == m_hEnemy->edict() )
-		{
-			m_flNextHornetAttackCheck = gpGlobals->time + RANDOM_FLOAT( 2.0f, 5.0f );
-			m_fCanHornetAttack = TRUE;
-			return m_fCanHornetAttack;
-		}
-	}
-
-	m_flNextHornetAttackCheck = gpGlobals->time + 0.2f;// don't check for half second if this check wasn't successful
-	m_fCanHornetAttack = FALSE;
-	return m_fCanHornetAttack;
-}
 
 //=========================================================
 // StartTask
