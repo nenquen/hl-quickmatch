@@ -210,3 +210,14 @@ if(CMAKE_BUILD_TYPE MATCHES "Release" AND NOT WIN32)
 			POST_BUILD DEPENDS ${SVDLL_LIBRARY}
 			COMMAND ${CMAKE_STRIP} -s $<TARGET_FILE:${SVDLL_LIBRARY}>)
 endif()
+
+# After every build, copy the server DLL into a clean output folder so it can be
+# picked up easily by the game without any other build artifacts.
+add_custom_command(TARGET ${SVDLL_LIBRARY}
+	POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E make_directory
+		"${CMAKE_BINARY_DIR}/cleanout/dlls"
+	COMMAND ${CMAKE_COMMAND} -E copy
+		"$<TARGET_FILE:${SVDLL_LIBRARY}>"
+		"${CMAKE_BINARY_DIR}/cleanout/dlls/"
+)

@@ -242,3 +242,14 @@ if(CMAKE_BUILD_TYPE MATCHES "Release" AND NOT WIN32)
 			POST_BUILD DEPENDS ${CLDLL_LIBRARY}
 			COMMAND ${CMAKE_STRIP} -s $<TARGET_FILE:${CLDLL_LIBRARY}>)
 endif()
+
+# After every build, copy the client DLL into a clean output folder so it can be
+# picked up easily by the game without any other build artifacts.
+add_custom_command(TARGET ${CLDLL_LIBRARY}
+	POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E make_directory
+		"${CMAKE_BINARY_DIR}/cleanout/cl_dlls"
+	COMMAND ${CMAKE_COMMAND} -E copy
+		"$<TARGET_FILE:${CLDLL_LIBRARY}>"
+		"${CMAKE_BINARY_DIR}/cleanout/cl_dlls/"
+)

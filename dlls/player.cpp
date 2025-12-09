@@ -2680,10 +2680,9 @@ void CBasePlayer::PostThink()
 	{
 		if( gpGlobals->time < m_flWhistleGlowEndTime )
 		{
-			// Use a light white glow shell as a subtle outline around the player model.
-			// We don't force a special rendermode here; just a low alpha shell.
+			// Use a white glow shell as a clear but relatively tight outline.
 			pev->renderfx = kRenderFxGlowShell;
-			pev->renderamt = 35; // slightly stronger than before but still subtle
+			pev->renderamt = 55; // thinner/closer glow around the model
 			pev->rendercolor = Vector( 255, 255, 255 );
 		}
 		else

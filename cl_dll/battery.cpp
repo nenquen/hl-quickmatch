@@ -74,7 +74,7 @@ int CHudBattery::Draw( float flTime )
 	if( gHUD.m_iHideHUDDisplay & HIDEHUD_HEALTH )
 		return 1;
 
-	int r, g, b, x, y, a;
+	int r, g, b, x, a;
 
 	// Always render armor HUD text in white.
 	r = g = b = 255;

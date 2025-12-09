@@ -71,6 +71,11 @@ void HistoryResource::AddToHistory( int iType, const char *szName, int iCount )
 	if( iType != HISTSLOT_ITEM )
 		return;
 
+	// Don't show history entries for health and armor pickups; keep the HUD
+	// clean and only show weapon-related notifications.
+	if( !stricmp( szName, "item_healthkit" ) || !stricmp( szName, "item_battery" ) )
+		return;
+
 	if( ( ( ( AMMO_PICKUP_GAP * iCurrentHistorySlot ) + AMMO_PICKUP_PICK_HEIGHT ) > AMMO_PICKUP_HEIGHT_MAX ) || ( iCurrentHistorySlot >= MAX_HISTORY ) )
 	{
 		// the pic would have to be drawn too high
@@ -160,16 +165,22 @@ int HistoryResource::DrawAmmoHistory( float flTime )
 				if( clampedScale < 0.0f )
 					clampedScale = 0.0f;
 				
-				int ypos = ScreenHeight - ( AMMO_PICKUP_PICK_HEIGHT + ( AMMO_PICKUP_GAP * i ) );
-				
-				// Measure text width using console font utilities.
+				// Measure text width using console font utilities and size the box
+				// tightly around the text with small, symmetric horizontal padding.
 				int textWidth = ConsoleStringLen( fullText );
-				// Slightly larger padding for a cleaner pill-shaped box.
-				int paddingXLeft = XRES( 4 );
-				int paddingXRight = XRES( 22 );
+				int paddingXLeft = XRES( 6 );
+				int paddingXRight = XRES( 6 );
 				int paddingY = YRES( 3 );
 				int boxWidth = textWidth + paddingXLeft + paddingXRight;
 				int boxHeight = gHUD.m_iFontHeight + paddingY * 2;
+				
+				// Position weapon pickup text above the bottom-right ammo HUD.
+				// Use the actual box height when stacking, add bottom margin so we
+				// never overlap the ammo HUD, and a small extra gap so boxes don't
+				// visually merge.
+				int bottomMargin = YRES( 72 );
+				int extraGap = YRES( 6 );
+				int ypos = ScreenHeight - bottomMargin - boxHeight - ( ( AMMO_PICKUP_GAP + extraGap ) * i );
 				
 				// Position box anchored near the right side of the screen with a small margin.
 				int rightMargin = XRES( 10 );

@@ -224,10 +224,11 @@ void CHudSayText::SayTextPrint( const char *pszBuf, int iBufSize, int clientInde
 	m_iFlags |= HUD_ACTIVE;
 	PlaySound( "misc/talk.wav", 1 );
 
+	// Start chat higher so it sits comfortably above the bottom-left HP HUD.
 	if( ScreenHeight >= 480 )
-		Y_START = ScreenHeight - 60;
+		Y_START = ScreenHeight - 110;
 	else
-		Y_START = ScreenHeight - 45;
+		Y_START = ScreenHeight - 90;
 	Y_START -= ( line_height * ( MAX_LINES + 1 ) );
 }
 
