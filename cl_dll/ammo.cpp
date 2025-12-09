@@ -40,8 +40,6 @@ int g_iLastRequestedSlot = 0; // last slot requested via number keys / slot comm
 bool g_bWeaponMenuClosing = false;
 float g_flWeaponMenuCloseStart = 0.0f;
 
-client_sprite_t *GetSpriteList(client_sprite_t *pList, const char *psz, int iRes, int iCount);
-
 WeaponsResource gWR;
 
 int g_weaponselect = 0;
@@ -78,123 +76,23 @@ int WeaponsResource::HasAmmo( WEAPON *p )
 
 void WeaponsResource::LoadWeaponSprites( WEAPON *pWeapon )
 {
-	int i, iRes;
-
-	iRes = GetSpriteRes( ScreenWidth, ScreenHeight );
-
-	char sz[256];
-
 	if( !pWeapon )
 		return;
 
-	memset( &pWeapon->rcActive, 0, sizeof(wrect_t) );
-	memset( &pWeapon->rcInactive, 0, sizeof(wrect_t) );
-	memset( &pWeapon->rcAmmo, 0, sizeof(wrect_t) );
-	memset( &pWeapon->rcAmmo2, 0, sizeof(wrect_t) );
+	// Clear all HUD sprite handles/rects for this weapon.
+	memset( &pWeapon->rcActive, 0, sizeof( wrect_t ) );
+	memset( &pWeapon->rcInactive, 0, sizeof( wrect_t ) );
+	memset( &pWeapon->rcAmmo, 0, sizeof( wrect_t ) );
+	memset( &pWeapon->rcAmmo2, 0, sizeof( wrect_t ) );
 	pWeapon->hInactive = 0;
 	pWeapon->hActive = 0;
 	pWeapon->hAmmo = 0;
 	pWeapon->hAmmo2 = 0;
-
-	sprintf( sz, "sprites/%s.txt", pWeapon->szName );
-	client_sprite_t *pList = SPR_GetList( sz, &i );
-
-	if( !pList )
-		return;
-
-	client_sprite_t *p;
-
-	p = GetSpriteList( pList, "crosshair", iRes, i );
-	if( p )
-	{
-		sprintf( sz, "sprites/%s.spr", p->szSprite );
-		pWeapon->hCrosshair = SPR_Load( sz );
-		pWeapon->rcCrosshair = p->rc;
-	}
-	else
-		pWeapon->hCrosshair = 0;
-
-	p = GetSpriteList( pList, "autoaim", iRes, i );
-	if( p )
-	{
-		sprintf( sz, "sprites/%s.spr", p->szSprite );
-		pWeapon->hAutoaim = SPR_Load( sz );
-		pWeapon->rcAutoaim = p->rc;
-	}
-	else
-		pWeapon->hAutoaim = 0;
-
-	p = GetSpriteList( pList, "zoom", iRes, i );
-	if( p )
-	{
-		sprintf( sz, "sprites/%s.spr", p->szSprite );
-		pWeapon->hZoomedCrosshair = SPR_Load( sz );
-		pWeapon->rcZoomedCrosshair = p->rc;
-	}
-	else
-	{
-		pWeapon->hZoomedCrosshair = pWeapon->hCrosshair; //default to non-zoomed crosshair
-		pWeapon->rcZoomedCrosshair = pWeapon->rcCrosshair;
-	}
-
-	p = GetSpriteList( pList, "zoom_autoaim", iRes, i );
-	if( p )
-	{
-		sprintf( sz, "sprites/%s.spr", p->szSprite );
-		pWeapon->hZoomedAutoaim = SPR_Load( sz );
-		pWeapon->rcZoomedAutoaim = p->rc;
-	}
-	else
-	{
-		pWeapon->hZoomedAutoaim = pWeapon->hZoomedCrosshair;  //default to zoomed crosshair
-		pWeapon->rcZoomedAutoaim = pWeapon->rcZoomedCrosshair;
-	}
-
-	p = GetSpriteList( pList, "weapon", iRes, i );
-	if( p )
-	{
-		sprintf( sz, "sprites/%s.spr", p->szSprite );
-		pWeapon->hInactive = SPR_Load( sz );
-		pWeapon->rcInactive = p->rc;
-
-		gHR.iHistoryGap = Q_max( gHR.iHistoryGap, pWeapon->rcActive.bottom - pWeapon->rcActive.top );
-	}
-	else
-		pWeapon->hInactive = 0;
-
-	p = GetSpriteList( pList, "weapon_s", iRes, i );
-	if( p )
-	{
-		sprintf( sz, "sprites/%s.spr", p->szSprite );
-		pWeapon->hActive = SPR_Load( sz );
-		pWeapon->rcActive = p->rc;
-	}
-	else
-		pWeapon->hActive = 0;
-
-	p = GetSpriteList( pList, "ammo", iRes, i );
-	if( p )
-	{
-		sprintf( sz, "sprites/%s.spr", p->szSprite );
-		pWeapon->hAmmo = SPR_Load( sz );
-		pWeapon->rcAmmo = p->rc;
-
-		gHR.iHistoryGap = Q_max( gHR.iHistoryGap, pWeapon->rcActive.bottom - pWeapon->rcActive.top );
-	}
-	else
-		pWeapon->hAmmo = 0;
-
-	p = GetSpriteList( pList, "ammo2", iRes, i );
-	if( p )
-	{
-		sprintf( sz, "sprites/%s.spr", p->szSprite );
-		pWeapon->hAmmo2 = SPR_Load( sz );
-		pWeapon->rcAmmo2 = p->rc;
-
-		gHR.iHistoryGap = Q_max( gHR.iHistoryGap, pWeapon->rcActive.bottom - pWeapon->rcActive.top );
-	}
-	else
-		pWeapon->hAmmo2 = 0;
+	pWeapon->hCrosshair = 0;
+	pWeapon->hAutoaim = 0;
+	pWeapon->hZoomedCrosshair = 0;
+	pWeapon->hZoomedAutoaim = 0;
+	// Intentionally do not look for sprites/<weapon>.txt anymore.
 }
 
 // Returns the first weapon for a given slot.
@@ -1193,30 +1091,4 @@ int CHudAmmo::DrawWList( float flTime )
 	}
 
 	return 1;
-}
-
-/* =================================
-	GetSpriteList
-
-Finds and returns the matching 
-sprite name 'psz' and resolution 'iRes'
-in the given sprite list 'pList'
-iCount is the number of items in the pList
-================================= */
-client_sprite_t *GetSpriteList( client_sprite_t *pList, const char *psz, int iRes, int iCount )
-{
-	if( !pList )
-		return NULL;
-
-	int i = iCount;
-	client_sprite_t *p = pList;
-
-	while( i-- )
-	{
-		if( p->iRes == iRes && !strcmp( psz, p->szName ))
-			return p;
-		p++;
-	}
-
-	return NULL;
 }

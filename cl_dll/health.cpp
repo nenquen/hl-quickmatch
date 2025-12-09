@@ -230,14 +230,14 @@ int CHudHealth::Draw( float flTime )
 		// Health number on the bottom, label directly above it.
 		y = ScreenHeight - gHUD.m_iFontHeight - gHUD.m_iFontHeight / 2;
 		int labelY = y - gHUD.m_iFontHeight;
-		int baseX = XRES( 20 );
+		int baseX = XRES( 4 );
 
 		// Draw "HP" label.
 		gHUD.DrawHudString( baseX, labelY, ScreenWidth, "HP", r, g, b );
 
 		// Draw health number.
 		x = baseX;
-		x = gHUD.DrawHudNumber( x, y + gHUD.m_iHudNumbersYOffset, DHN_3DIGITS | DHN_DRAWZERO, m_iHealth, r, g, b );
+		x = gHUD.DrawHudNumber( x, y + gHUD.m_iHudNumbersYOffset, DHN_DRAWZERO, m_iHealth, r, g, b );
 		
 	}
 

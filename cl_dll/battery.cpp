@@ -108,7 +108,7 @@ int CHudBattery::Draw( float flTime )
 	ScaleColors( r, g, b, a );
 
 	// Place armor HUD above health HUD, sharing the same base X position.
-	int baseX = XRES( 20 );
+	int baseX = XRES( 4 );
 	int healthY = ScreenHeight - gHUD.m_iFontHeight - gHUD.m_iFontHeight / 2;
 	int armorY = healthY - ( gHUD.m_iFontHeight * 2 );
 	int labelY = armorY - gHUD.m_iFontHeight;
@@ -118,7 +118,7 @@ int CHudBattery::Draw( float flTime )
 
 	// Draw armor number.
 	x = baseX;
-	x = gHUD.DrawHudNumber( x, armorY + gHUD.m_iHudNumbersYOffset, DHN_3DIGITS | DHN_DRAWZERO, m_iBat, r, g, b );
+	x = gHUD.DrawHudNumber( x, armorY + gHUD.m_iHudNumbersYOffset, DHN_DRAWZERO, m_iBat, r, g, b );
 
 	return 1;
 }
