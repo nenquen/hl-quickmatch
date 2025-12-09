@@ -407,77 +407,6 @@ void CAGrunt::HandleAnimEvent( MonsterEvent_t *pEvent )
 {
 	switch( pEvent->event )
 	{
-	case AGRUNT_AE_HORNET1:
-	case AGRUNT_AE_HORNET2:
-	case AGRUNT_AE_HORNET3:
-	case AGRUNT_AE_HORNET4:
-	case AGRUNT_AE_HORNET5:
-		{
-			// m_vecEnemyLKP should be center of enemy body
-			Vector vecArmPos, vecArmDir;
-			Vector vecDirToEnemy;
-			Vector angDir;
-
-			if( HasConditions( bits_COND_SEE_ENEMY ) )
-			{
-				vecDirToEnemy = ( ( m_vecEnemyLKP ) - pev->origin );
-				angDir = UTIL_VecToAngles( vecDirToEnemy );
-				vecDirToEnemy = vecDirToEnemy.Normalize();
-			}
-			else
-			{
-				angDir = pev->angles;
-				UTIL_MakeAimVectors( angDir );
-				vecDirToEnemy = gpGlobals->v_forward;
-			}
-
-			pev->effects = EF_MUZZLEFLASH;
-
-			// make angles +-180
-			if( angDir.x > 180.0f )
-			{
-				angDir.x = angDir.x - 360.0f;
-			}
-
-			SetBlending( 0, angDir.x );
-			GetAttachment( 0, vecArmPos, vecArmDir );
-
-			vecArmPos = vecArmPos + vecDirToEnemy * 32.0f;
-			MESSAGE_BEGIN( MSG_PVS, SVC_TEMPENTITY, vecArmPos );
-				WRITE_BYTE( TE_SPRITE );
-				WRITE_COORD( vecArmPos.x );	// pos
-				WRITE_COORD( vecArmPos.y );	
-				WRITE_COORD( vecArmPos.z );	
-				WRITE_SHORT( iAgruntMuzzleFlash );		// model
-				WRITE_BYTE( 6 );				// size * 10
-				WRITE_BYTE( 128 );			// brightness
-			MESSAGE_END();
-
-			CBaseEntity *pHornet = CBaseEntity::Create( "hornet", vecArmPos, UTIL_VecToAngles( vecDirToEnemy ), edict() );
-			UTIL_MakeVectors( pHornet->pev->angles );
-			pHornet->pev->velocity = gpGlobals->v_forward * 300.0f;
-
-			switch( RANDOM_LONG( 0, 2 ) )
-			{
-				case 0:
-					EMIT_SOUND_DYN( ENT( pev ), CHAN_WEAPON, "agrunt/ag_fire1.wav", 1.0, ATTN_NORM, 0, 100 );
-					break;
-				case 1:
-					EMIT_SOUND_DYN( ENT( pev ), CHAN_WEAPON, "agrunt/ag_fire2.wav", 1.0, ATTN_NORM, 0, 100 );
-					break;
-				case 2:
-					EMIT_SOUND_DYN( ENT( pev ), CHAN_WEAPON, "agrunt/ag_fire3.wav", 1.0, ATTN_NORM, 0, 100 );
-					break;
-			}
-
-			CBaseMonster *pHornetMonster = pHornet->MyMonsterPointer();
-
-			if( pHornetMonster )
-			{
-				pHornetMonster->m_hEnemy = m_hEnemy;
-			}
-		}
-		break;
 	case AGRUNT_AE_LEFT_FOOT:
 		switch( RANDOM_LONG( 0, 1 ) )
 		{
@@ -502,7 +431,6 @@ void CAGrunt::HandleAnimEvent( MonsterEvent_t *pEvent )
 			break;
 		}
 		break;
-
 	case AGRUNT_AE_LEFT_PUNCH:
 		{
 			CBaseEntity *pHurt = CheckTraceHullAttack( AGRUNT_MELEE_DIST, gSkillData.agruntDmgPunch, DMG_CLUB );
@@ -634,7 +562,6 @@ Schedule_t slAGruntFail[] =
 	{
 		tlAGruntFail,
 		ARRAYSIZE( tlAGruntFail ),
-		bits_COND_CAN_RANGE_ATTACK1 |
 		bits_COND_CAN_MELEE_ATTACK1,
 		0,
 		"AGrunt Fail"
@@ -657,7 +584,6 @@ Schedule_t slAGruntCombatFail[] =
 	{
 		tlAGruntCombatFail,
 		ARRAYSIZE( tlAGruntCombatFail ),
-		bits_COND_CAN_RANGE_ATTACK1 |
 		bits_COND_CAN_MELEE_ATTACK1,
 		0,
 		"AGrunt Combat Fail"
@@ -681,7 +607,6 @@ Schedule_t slAGruntStandoff[] =
 	{
 		tlAGruntStandoff,
 		ARRAYSIZE( tlAGruntStandoff ),
-		bits_COND_CAN_RANGE_ATTACK1 |
 		bits_COND_CAN_MELEE_ATTACK1 |
 		bits_COND_SEE_ENEMY |
 		bits_COND_NEW_ENEMY |
@@ -825,6 +750,19 @@ BOOL CAGrunt::CheckMeleeAttack1( float flDot, float flDist )
 
 
 //=========================================================
+// CheckRangeAttack1 - Alien Grunt no longer has a ranged
+// attack; always report that no ranged attack is possible.
+//=========================================================
+BOOL CAGrunt::CheckRangeAttack1( float flDot, float flDist )
+{
+	// parameters are unused; agrunt has no ranged attack any more
+	(void)flDot;
+	(void)flDist;
+	return FALSE;
+}
+
+
+//=========================================================
 // StartTask
 //=========================================================
 void CAGrunt::StartTask( Task_t *pTask )
@@ -843,77 +781,6 @@ void CAGrunt::StartTask( Task_t *pTask )
 				ALERT( at_aiconsole, "AGruntGetPathToEnemyCorpse failed!!\n" );
 				TaskFail();
 			}
-		}
-		break;
-	case TASK_AGRUNT_SETUP_HIDE_ATTACK:
-		// alien grunt shoots hornets back out into the open from a concealed location. 
-		// try to find a spot to throw that gives the smart weapon a good chance of finding the enemy.
-		// ideally, this spot is along a line that is perpendicular to a line drawn from the agrunt to the enemy.
-		CBaseMonster	*pEnemyMonsterPtr;
-
-		pEnemyMonsterPtr = m_hEnemy->MyMonsterPointer();
-
-		if( pEnemyMonsterPtr )
-		{
-			Vector vecCenter;
-			TraceResult tr;
-			BOOL fSkip;
-
-			fSkip = FALSE;
-			vecCenter = Center();
-
-			UTIL_VecToAngles( m_vecEnemyLKP - pev->origin );
-
-			UTIL_TraceLine( Center() + gpGlobals->v_forward * 128.0f, m_vecEnemyLKP, ignore_monsters, ENT( pev ), &tr );
-			if( tr.flFraction == 1.0f )
-			{
-				MakeIdealYaw( pev->origin + gpGlobals->v_right * 128.0f );
-				fSkip = TRUE;
-				TaskComplete();
-			}
-
-			if( !fSkip )
-			{
-				UTIL_TraceLine( Center() - gpGlobals->v_forward * 128.0f, m_vecEnemyLKP, ignore_monsters, ENT( pev ), &tr );
-				if( tr.flFraction == 1.0f )
-				{
-					MakeIdealYaw( pev->origin - gpGlobals->v_right * 128.0f );
-					fSkip = TRUE;
-					TaskComplete();
-				}
-			}
-
-			if( !fSkip )
-			{
-				UTIL_TraceLine( Center() + gpGlobals->v_forward * 256.0f, m_vecEnemyLKP, ignore_monsters, ENT( pev ), &tr );
-				if( tr.flFraction == 1.0f )
-				{
-					MakeIdealYaw( pev->origin + gpGlobals->v_right * 256.0f );
-					fSkip = TRUE;
-					TaskComplete();
-				}
-			}
-
-			if( !fSkip )
-			{
-				UTIL_TraceLine( Center() - gpGlobals->v_forward * 256.0f, m_vecEnemyLKP, ignore_monsters, ENT( pev ), &tr );
-				if( tr.flFraction == 1.0f )
-				{
-					MakeIdealYaw( pev->origin - gpGlobals->v_right * 256.0f );
-					fSkip = TRUE;
-					TaskComplete();
-				}
-			}
-
-			if( !fSkip )
-			{
-				TaskFail();
-			}
-		}
-		else
-		{
-			ALERT( at_aiconsole, "AGRunt - no enemy monster ptr!!!\n" );
-			TaskFail();
 		}
 		break;
 	default:
@@ -959,7 +826,7 @@ Schedule_t *CAGrunt::GetSchedule( void )
 				return GetScheduleOfType( SCHED_WAKE_ANGRY );
 			}
 
-			// zap player!
+			// melee zap
 			if( HasConditions( bits_COND_CAN_MELEE_ATTACK1 ) )
 			{
 				AttackSound();// this is a total hack. Should be parto f the schedule
@@ -969,12 +836,6 @@ Schedule_t *CAGrunt::GetSchedule( void )
 			if( HasConditions( bits_COND_HEAVY_DAMAGE ) )
 			{
 				return GetScheduleOfType( SCHED_SMALL_FLINCH );
-			}
-
-			// can attack
-			if( HasConditions( bits_COND_CAN_RANGE_ATTACK1 ) && OccupySlot ( bits_SLOTS_AGRUNT_HORNET ) )
-			{
-				return GetScheduleOfType( SCHED_RANGE_ATTACK1 );
 			}
 
 			if( OccupySlot ( bits_SLOT_AGRUNT_CHASE ) )
@@ -1001,24 +862,8 @@ Schedule_t *CAGrunt::GetScheduleOfType( int Type )
 	case SCHED_TAKE_COVER_FROM_ENEMY:
 		return &slAGruntTakeCoverFromEnemy[0];
 		break;
-	case SCHED_RANGE_ATTACK1:
-		if( HasConditions( bits_COND_SEE_ENEMY ) )
-		{
-			//normal attack
-			return &slAGruntRangeAttack1[0];
-		}
-		else
-		{
-			// attack an unseen enemy
-			// return &slAGruntHiddenRangeAttack[0];
-			return &slAGruntRangeAttack1[0];
-		}
-		break;
 	case SCHED_AGRUNT_THREAT_DISPLAY:
 		return &slAGruntThreatDisplay[0];
-		break;
-	case SCHED_AGRUNT_SUPPRESS:
-		return &slAGruntSuppress[0];
 		break;
 	case SCHED_STANDOFF:
 		return &slAGruntStandoff[0];

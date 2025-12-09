@@ -36,6 +36,12 @@
 #include "r_studioint.h"
 #include "com_model.h"
 
+// Local copy of sound flag used for pitch changes in EV_PlaySound calls.
+// Keeps client DLL self-contained even if engine headers don't define it.
+#ifndef SND_CHANGE_PITCH
+#define SND_CHANGE_PITCH 1
+#endif
+
 extern engine_studio_api_t IEngineStudio;
 
 static int g_tracerCount[32];

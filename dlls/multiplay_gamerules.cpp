@@ -166,9 +166,6 @@ void CHalfLifeMultiplay::RefreshSkillData( void )
 
 	// Hand Grendade
 	gSkillData.plrDmgHandGrenade = 100;
-
-	// Tripmine
-	gSkillData.plrDmgTripmine = 150;
 }
 
 // longest the intermission can last, in seconds
